@@ -3,20 +3,28 @@ CryptoCore - Криптографическая система для шифро
 Структура проекта
 ````text
 CryptoCore/
-├── cryptocore.py              # Главный исполняемый файл CLI
-├── main.py                    # Устаревший интерфейс (для обратной совместимости)
-├── setup.py                   # Конфигурация установки пакета
-├── requirements.txt           # Зависимости Python
-├── README.md                  # Документация
-└── crypto/                    # Пакет с ядром криптосистемы
-    ├── __init__.py
-    ├── cipher_core.py         # AES шифрование/дешифрование
-    ├── crypto_core.py         # Интеграция кастомного генератора
-    ├── crypto_exception.py    # Обработка исключений
-    ├── crypto_logger.py       # Система логирования
-    ├── file_processor.py      # Обработка файлов
-    ├── generator.py           # Генератор случайных данных
-    └── key_generator.py       # Кастомный генератор ключей
+├── cryptocore.py # Главный исполняемый файл CLI
+├── main.py # Устаревший интерфейс (для обратной совместимости)
+├── setup.py # Конфигурация установки пакета
+├── requirements.txt # Зависимости Python
+├── README.md # Документация
+└── crypto/ # Пакет с ядром криптосистемы
+    ├── init.py
+    ├── cipher_core.py # AES шифрование/дешифрование
+    ├── crypto_core.py # Интеграция кастомного генератора
+    ├── crypto_exception.py # Обработка исключений
+    ├── crypto_logger.py # Система логирования
+    ├── file_processor.py # Обработка файлов
+    ├── generator.py # Генератор случайных данных
+    ├── key_generator.py # Кастомный генератор ключей
+    └── modes # Директория с режимами шифрования
+        ├── init.py
+        ├── base_mode.py # Базовый класс режимов
+        ├── cbc_mode.py # Режим CBC
+        ├── cfb_mode.py # Режим CFB
+        ├── ofb_mode.py # Режим OFB
+        └── ctr_mode.py # Режим CTR
+    
 ````
 Зависимости
 Обязательные зависимости
@@ -88,7 +96,14 @@ python cryptocore.py --algorithm aes --mode ecb --encrypt --key 0011223344556677
 ## Шифрование PDF документа
 
 ```bash
+
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf --output document.pdf.enc
+````
+## Дешифрование PDF документа
+
+```bash 
+
+python cryptocore.py --algorithm aes --mode ecb --decrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf.enc --output document_restored.pdf
 ````
 # Шифрование ZIP архива
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key aabbccddeeff00112233445566778899 --input archive.zip
@@ -111,107 +126,201 @@ python cryptocore.py --algorithm aes --mode ecb --decrypt --key 0011223344556677
 # Создается файл: data.csv.enc.dec
 Дешифрование бинарных файлов
 bash
-# Дешифрование PDF документа
-python cryptocore.py --algorithm aes --mode ecb --decrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf.enc --output document_restored.pdf
 
 # Дешифрование архива
 python cryptocore.py --algorithm aes --mode ecb --decrypt --key aabbccddeeff00112233445566778899 --input archive.zip.enc
 ````
-Генерация тестовых ключей
-Генерация ключей AES
-```bash
+##Генерация тестовых ключей
+
+##Генерация ключей AES
+
 # AES-128 (16 байт, 32 hex символа)
+```bash
 python -c "import os; print('AES-128 key:', os.urandom(16).hex())"
+````
 
-# AES-192 (24 байта, 48 hex символов)
-python -c "import os; print('AES-192 key:', os.urandom(24).hex())"
+## Примеры валидных ключей для тестирования
 
-# AES-256 (32 байта, 64 hex символа)
-python -c "import os; print('AES-256 key:', os.urandom(32).hex())"
-Примеры валидных ключей для тестирования
-bash
-# AES-128 ключи
+### AES-128 ключи
 00112233445566778899aabbccddeeff
 000102030405060708090a0b0c0d0e0f
 a0a1a2a3a4a5a6a7a8a9aaabacadaeaf
 
-# AES-256 ключи
-000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
-00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
-````
-Тестирование и проверка целостности
-# Полный цикл тестирования
+
+
+## Тестирование и проверка целостности
 
 
 
-# 1. Создание тестового файла
+### Создание тестового файла
+
 ```bash
 
 echo "Test data for encryption verification" > test_original.txt
 ```
-# 2. Шифрование
-```bash
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input test_original.txt --output test_encrypted.bin
-````
-# 3. Дешифрование
-```bash
-python cryptocore.py --algorithm aes --mode ecb --decrypt --key 00112233445566778899aabbccddeeff --input test_encrypted.bin --output test_decrypted.txt
-````
+
 # 4. Проверка целостности
-fc /B test_original.txt test_decrypted.txt  # Windows
-# cmp test_original.txt test_decrypted.txt  # Linux/Mac
-```
+
 ```bash
+
 python -c "print('Files are identical' if open('test_original.txt', 'rb').read() == open('test_decrypted.txt', 'rb').read() else 'Files are different')"
 ```
+
 # 5. Проверка хешей
 
 ### certutil -hashfile test_original.txt SHA256  # Windows
 ### sha256sum test_original.txt test_decrypted.txt  # Linux/Mac
 
-Тестирование с разными размерами файлов
-bash
-# Маленький файл (1 байт)
-echo "A" > small.txt
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input small.txt --output small.enc
-python cryptocore.py --algorithm aes --mode ecb --decrypt --key 00112233445566778899aabbccddeeff --input small.enc --output small_dec.txt
 
-# Средний файл (1KB)
-python -c "import os; open('medium.bin', 'wb').write(os.urandom(1024))"
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input medium.bin --output medium.enc
-python cryptocore.py --algorithm aes --mode ecb --decrypt --key 00112233445566778899aabbccddeeff --input medium.enc --output medium_dec.bin
+```bash
 
-# Большой файл (1MB)
-python -c "import os; open('large.bin', 'wb').write(os.urandom(1048576))"
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input large.bin --output large.enc
-python cryptocore.py --algorithm aes --mode ecb --decrypt --key 00112233445566778899aabbccddeeff --input large.enc --output large_dec.bin
-Проверка работы программы
-Проверка аргументов командной строки
-bash
-# Проверка справки
+diff test_original.txt decrypted_test.txt
+```
+
+### Проверка справки
+
+```bash
 python cryptocore.py --help
+````
 
-# Проверка валидации аргументов (должны вызвать ошибки)
-python cryptocore.py --algorithm des --mode ecb --encrypt --key 001122 --input test.txt  # Неверный алгоритм
-python cryptocore.py --algorithm aes --mode cbc --encrypt --key 001122 --input test.txt  # Неверный режим
-python cryptocore.py --algorithm aes --mode ecb --key 001122 --input test.txt           # Отсутствует операция
-python cryptocore.py --algorithm aes --mode ecb --encrypt --decrypt --key 001122 --input test.txt  # Конфликт операций
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key invalid_key --input test.txt      # Неверный ключ
-Проверка обработки ошибок
-bash
-# Несуществующий входной файл
+
+## Проверка валидации аргументов (должны вызвать ошибки)
+### Неверный алгоритм
+
+```bash
+
+python cryptocore.py --algorithm des --mode ecb --encrypt --key 001122 --input test.txt
+```
+### Неверный режим
+
+```bash
+
+python cryptocore.py --algorithm aes --mode cbc --encrypt --key 001122 --input test.txt 
+```
+### Отсутствует операция
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ecb --key 001122 --input test.txt 
+```
+### Конфликт операций
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ecb --encrypt --decrypt --key 001122 --input test.txt
+```
+### Неверный ключ
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ecb --encrypt --key invalid_key --input test.txt
+```
+
+
+## Проверка обработки ошибок
+
+### Несуществующий входной файл
+
+```bash
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input nonexistent.txt --output test.enc
+```
+### Неверная длина ключа
 
-# Неверная длина ключа
+```bash
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 001122 --input test.txt --output test.enc
+```
+### Неhex-символы в ключе
 
-# Неhex-символы в ключе
+```bash
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeefg --input test.txt --output test.enc
-Форматы ключей
-Поддерживаемые размеры ключей AES
-AES-128: 16 байт (32 hex символа) - пример: 00112233445566778899aabbccddeeff
+```
 
-AES-192: 24 байта (48 hex символов) - пример: 00112233445566778899aabbccddeeff00112233445566778899aabb
 
-AES-256: 32 байта (64 hex символа) - пример: 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
+
+## Шифрование и дешифрование в режиме ECB
+
+### Шифрование файла в режиме
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input test_original.txt --output test_encrypted.bin
+````
+### Дешифрование файла в режиме
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ecb --decrypt --key 00112233445566778899aabbccddeeff --input test_encrypted.bin --output test_decrypted.txt
+````
+
+
+## Шифрование и дешифрование в режиме CBC
+
+
+### Шифрование файла в режиме CBC (IV генерируется автоматически)
+
+```bash
+
+python cryptocore.py --algorithm aes --mode cbc --encrypt --key 00112233445566778899aabbccddeeff --input document.pdf --output document.pdf.cbc.enc
+````
+### Дешифрование файла (IV читается из файла автоматически)
+
+```bash
+
+python cryptocore.py --algorithm aes --mode cbc --decrypt --key 00112233445566778899aabbccddeeff --input document.pdf.cbc.enc --output document_decrypted.pdf
+````
+### Дешифрование с явным указанием IV
+
+```bash
+
+python cryptocore.py --algorithm aes --mode cbc --decrypt --key 00112233445566778899aabbccddeeff --iv AABBCCDDEEFF00112233445566778899 --input document.pdf.cbc.enc --output document_decrypted.pdf
+```
+
+
+## Шифрование и дешифрование в режиме CFB
+
+### Шифрование файла в режиме CFB
+
+```bash
+
+python cryptocore.py --algorithm aes --mode cfb --encrypt --key 00112233445566778899aabbccddeeff --input image.jpg --output image.jpg.cfb.enc
+```
+
+### Дешифрование файла в режиме CFB
+
+```bash
+
+python cryptocore.py --algorithm aes --mode cfb --decrypt --key 00112233445566778899aabbccddeeff --input image.jpg.cfb.enc --output image_restored.jpg
+```
+
+
+## Шифрование и дешифрование в режиме OFB
+
+### Шифрование файла в режиме OFB
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ofb --encrypt --key 00112233445566778899aabbccddeeff --input data.bin --output data.bin.ofb.enc
+````
+### Дешифрование файла в режиме OFB
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ofb --decrypt --key 00112233445566778899aabbccddeeff --input data.bin.ofb.enc --output data_restored.bin
+```
+
+
+## Шифрование и дешифрование в режиме CTR
+
+### Шифрование файла в режиме CTR
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ctr --encrypt --key 00112233445566778899aabbccddeeff --input archive.zip --output archive.zip.ctr.enc
+````
+### Дешифрование файла в режиме CTR
+
+```bash
+
+python cryptocore.py --algorithm aes --mode ctr --decrypt --key 00112233445566778899aabbccddeeff --input archive.zip.ctr.enc --output archive_restored.zip
+```
 
