@@ -49,15 +49,28 @@ cd CryptoCore
 ## Перезапись удалённой версии на локальную
 git push --force-with-lease origin master
 
-## Создание виртуального окружения (опционально)
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-## source .venv/bin/activate  # Linux/Mac
 
-## Установка зависимостей
+## Создаем виртуальное окружение в папке проекта
+
+```bash
+
+python3 -m venv venv
+````
+
+### Активируем виртуальное окружение
+
+```bash
+
+source venv/bin/activate
+```
+
+### Теперь pip будет работать в виртуальном окружении
+
+
+### Установка зависимостей
 pip install -r requirements.txt
 
-## Проверка установки
+### Проверка установки
 python cryptocore.py --help
 Способ 2: Установка как пакета
 bash
@@ -69,9 +82,12 @@ cryptocore --help
 Инструкции по использованию
 
 ## Базовый синтаксис команды
-bash
+```bash
 python cryptocore.py --algorithm aes --mode ecb --encrypt/--decrypt --key <hex_key> --input <input_file> [--output <output_file>]
-Генерация тестовых файлов
+````
+
+## Генерация тестовых файлов
+
 Создание текстового тестового файла
 bash
 ## Создание простого текстового файла
