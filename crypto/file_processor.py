@@ -1,41 +1,32 @@
 import os
 import time
-from typing import Optional
-from .cipher_core import CipherCore
-from .key_generator import KeyGenerator
-from .crypto_logger import CryptoLogger
+from crypto.cipher_core import CipherCore
+from crypto.crypto_logger import CryptoLogger
 
 
 class FileProcessor:
-    SALT_SIZE = 16
-
     @staticmethod
-    def generate_test_file(path: str, size: int):
-        """Генерация тестового файла"""
-        start_time = time.time()
+    def process_file(input_path: str, output_path: str, key: bytes,
+                     mode: str, encrypt: bool, iv: bytes = None):
+        """
+        Обработка файла с поддержкой разных режимов шифрования
 
-        with open(path, 'wb') as f:
-            f.write(os.urandom(size))
-
-        elapsed = time.time() - start_time
-        speed = (size * 8) / elapsed / 1e6  # Mbps
-
-        CryptoLogger.log(
-            f"Generated test file: {path} "
-            f"(size: {size} bytes, speed: {speed:.2f} Mbps)",
-            False
-        )
-
-    @staticmethod
-    def process_file(input_path: str, output_path: str,
-                     password: str, encrypt: bool):
-        """Обработка файла (шифрование/дешифрование)"""
+        Args:
+            input_path: путь к входному файлу
+            output_path: путь к выходному файлу
+            key: ключ шифрования
+            mode: режим работы
+            encrypt: True для шифрования, False для дешифрования
+            iv: вектор инициализации (для дешифрования)
+        """
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"Input file not found: {input_path}")
 
         file_size = os.path.getsize(input_path)
+        operation = "encryption" if encrypt else "decryption"
+
         CryptoLogger.log(
-            f"Processing {'encryption' if encrypt else 'decryption'}: "
+            f"Processing {operation} ({mode}): "
             f"{input_path} -> {output_path} (size: {file_size} bytes)",
             False
         )
@@ -44,64 +35,74 @@ class FileProcessor:
 
         try:
             if encrypt:
-                # Читаем исходный файл
-                with open(input_path, 'rb') as infile:
-                    plaintext = infile.read()
-
-                # Генерируем соль и ключ с помощью кастомного генератора
-                salt = KeyGenerator.generate_salt()
-                key = KeyGenerator.derive_key(password, salt)
-
-                # Шифруем
-                cipher = CipherCore(key)
-                encrypted = cipher.encrypt(plaintext)
-
-                # Записываем соль и зашифрованные данные
-                with open(output_path, 'wb') as outfile:
-                    outfile.write(salt)
-                    outfile.write(encrypted)
-
-                CryptoLogger.log(
-                    f"Encryption: {len(plaintext)} -> {len(encrypted)} bytes "
-                    f"+ {len(salt)} bytes salt ",
-                    False
-                )
-
+                FileProcessor._encrypt_file(input_path, output_path, key, mode)
             else:
-                # Читаем зашифрованный файл
-                with open(input_path, 'rb') as infile:
-                    salt = infile.read(FileProcessor.SALT_SIZE)
-                    if len(salt) != FileProcessor.SALT_SIZE:
-                        raise ValueError(f"Invalid salt size: {len(salt)} bytes, expected {FileProcessor.SALT_SIZE}")
-
-                    ciphertext = infile.read()
-
-                # Генерируем ключ с помощью кастомного генератора
-                key = KeyGenerator.derive_key(password, salt)
-                cipher = CipherCore(key)
-                decrypted = cipher.decrypt(ciphertext)
-
-                # Записываем расшифрованные данные
-                with open(output_path, 'wb') as outfile:
-                    outfile.write(decrypted)
-
-                CryptoLogger.log(
-                    f"Decryption: {len(ciphertext)} -> {len(decrypted)} bytes "
-                    f"",
-                    False
-                )
+                FileProcessor._decrypt_file(input_path, output_path, key, mode, iv)
 
             elapsed = time.time() - start_time
-            speed = (file_size * 8) / elapsed / 1e6
+            speed = (file_size * 8) / elapsed / 1e6 if elapsed > 0 else 0
+
             CryptoLogger.log(
-                f"{'Encryption' if encrypt else 'Decryption'} completed: "
+                f"{operation.capitalize()} completed: "
                 f"{speed:.2f} Mbps, {elapsed:.2f} seconds",
                 False
             )
 
         except Exception as e:
-            # Удаляем частично созданный файл при ошибке
             if os.path.exists(output_path):
                 os.remove(output_path)
             CryptoLogger.log(f"Error details: {str(e)}", True)
             raise e
+
+    @staticmethod
+    def _encrypt_file(input_path: str, output_path: str, key: bytes, mode: str):
+        """Шифрование файла"""
+        with open(input_path, 'rb') as infile:
+            plaintext = infile.read()
+
+        cipher = CipherCore(key, mode)
+        encrypted = cipher.encrypt(plaintext)
+
+        with open(output_path, 'wb') as outfile:
+            # Записываем IV для режимов кроме ECB
+            if mode != 'ecb':
+                outfile.write(cipher.get_iv())
+            outfile.write(encrypted)
+
+        CryptoLogger.log(
+            f"Encryption: {len(plaintext)} -> {len(encrypted)} bytes "
+            f"(mode: {mode}, iv: {cipher.get_iv().hex() if mode != 'ecb' else 'N/A'})",
+            False
+        )
+
+    @staticmethod
+    def _decrypt_file(input_path: str, output_path: str, key: bytes,
+                      mode: str, iv: bytes = None):
+        """Дешифрование файла"""
+        with open(input_path, 'rb') as infile:
+            if mode != 'ecb':
+                # Читаем IV из файла если не предоставлен
+                if iv is None:
+                    file_iv = infile.read(16)
+                    if len(file_iv) != 16:
+                        raise ValueError(
+                            f"Invalid IV in file: expected 16 bytes, got {len(file_iv)}"
+                        )
+                else:
+                    file_iv = iv
+                ciphertext = infile.read()
+            else:
+                file_iv = None
+                ciphertext = infile.read()
+
+        cipher = CipherCore(key, mode, file_iv)
+        decrypted = cipher.decrypt(ciphertext)
+
+        with open(output_path, 'wb') as outfile:
+            outfile.write(decrypted)
+
+        CryptoLogger.log(
+            f"Decryption: {len(ciphertext)} -> {len(decrypted)} bytes "
+            f"(mode: {mode}, iv: {file_iv.hex() if file_iv else 'N/A'})",
+            False
+        )

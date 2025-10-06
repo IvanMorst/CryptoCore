@@ -34,26 +34,29 @@ pip install -r requirements.txt
 Инструкции по сборке и установке
 Способ 1: Запуск напрямую 
 bash
-# Клонирование репозитория
+## Клонирование репозитория
 git clone <repository-url>
 cd CryptoCore
 
-# Создание виртуального окружения (опционально)
+## Перезапись удалённой версии на локальную
+git push --force-with-lease origin master
+
+## Создание виртуального окружения (опционально)
 python -m venv .venv
 .venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
+## source .venv/bin/activate  # Linux/Mac
 
-# Установка зависимостей
+## Установка зависимостей
 pip install -r requirements.txt
 
-# Проверка установки
+## Проверка установки
 python cryptocore.py --help
 Способ 2: Установка как пакета
 bash
-# Установка в режиме разработки
+## Установка в режиме разработки
 pip install -e .
 
-# Проверка установки
+## Проверка установки
 cryptocore --help
 Инструкции по использованию
 
@@ -63,28 +66,30 @@ python cryptocore.py --algorithm aes --mode ecb --encrypt/--decrypt --key <hex_k
 Генерация тестовых файлов
 Создание текстового тестового файла
 bash
-# Создание простого текстового файла
+## Создание простого текстового файла
 echo "This is a test file for CryptoCore encryption" > test_document.txt
 
-# Создание бинарного тестового файла
+## Создание бинарного тестового файла
 python -c "import os; open('test_binary.bin', 'wb').write(os.urandom(1024))"
-Создание файлов разных типов для тестирования
-bash
 
-# Шифрование файлов
-## Шифрование текстовых файлов
+
+## Шифрование с явным указанием выходного файла
 ```bash
-# Шифрование с явным указанием выходного файла
+
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input document.txt --output document.enc
+```
 
 # Шифрование с автоматическим именем выходного файла
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input data.csv
-# Создается файл: data.csv.enc
-Шифрование бинарных файлов
-bash
-# Шифрование PDF документа (предварительно создайте test.pdf)
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf --output document.pdf.enc
 
+```bash
+python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input data.csv
+```
+
+## Шифрование PDF документа
+
+```bash
+python cryptocore.py --algorithm aes --mode ecb --encrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf --output document.pdf.enc
+````
 # Шифрование ZIP архива
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key aabbccddeeff00112233445566778899 --input archive.zip
 Шифрование изображений
