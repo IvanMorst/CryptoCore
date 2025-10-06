@@ -59,3 +59,15 @@
 2025-10-06 21:00:09,910 - INFO - Processing decryption (ctr): archive.zip.ctr.enc -> archive_restored.zip (size: 1750043 bytes)
 2025-10-06 21:00:10,342 - INFO - Decryption: 1750027 -> 1750027 bytes (mode: ctr, iv: 62b1464a84d1698ebcd6dcf6b3704ba0)
 2025-10-06 21:00:10,342 - INFO - Decryption completed: 32.43 Mbps, 0.43 seconds
+2025-10-06 21:24:47,119 - INFO - Processing encryption (cbc): plaintext.bin -> cryptocore_cipher.bin (size: 10485760 bytes)
+2025-10-06 21:24:49,227 - INFO - Encryption: 10485760 -> 10485776 bytes (mode: cbc, iv: d61fd769a6e9b96b55849f71e9c2c0e0)
+2025-10-06 21:24:49,228 - INFO - Encryption completed: 39.78 Mbps, 2.11 seconds
+2025-10-06 21:25:42,118 - INFO - Processing encryption (cbc): plaintext.bin -> cryptocore_cipher.bin (size: 10485760 bytes)
+2025-10-06 21:25:44,294 - INFO - Encryption: 10485760 -> 10485776 bytes (mode: cbc, iv: ed3f08c58f7444647320c7c3c254db47)
+2025-10-06 21:25:44,296 - INFO - Encryption completed: 38.53 Mbps, 2.18 seconds
+2025-10-06 21:38:39,698 - INFO - Processing encryption (cbc): plaintext.bin -> cryptocore_cipher.bin (size: 10485760 bytes)
+2025-10-06 21:38:41,907 - INFO - Encryption: 10485760 -> 10485776 bytes (mode: cbc, iv: d0b772dcdebbf88d74b2ea46db4e6dd6)
+2025-10-06 21:38:41,908 - INFO - Encryption completed: 37.95 Mbps, 2.21 seconds
+2025-10-06 21:42:52,014 - INFO - Processing encryption (cbc): plaintext.bin -> cryptocore_cipher.bin (size: 10485760 bytes)
+2025-10-06 21:42:54,427 - INFO - Encryption: 10485760 -> 10485776 bytes (mode: cbc, iv: 09028dc9bdba90d1f3b135241653dbc7)
+2025-10-06 21:42:54,428 - INFO - Encryption completed: 34.76 Mbps, 2.41 seconds
