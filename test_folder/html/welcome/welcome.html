@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+<head>
+	<title>Welcome</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Content-Language" content="EN" />
+	<link rel="stylesheet" type="text/css" media="screen" href="welcome.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="../common/jquery.jscrollpane.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="../common/jquery.jscrollpane.lozenge.css" />
+    <script type="text/javascript" src="../common/jquery.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="../common/jquery-ui.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="../common/translation.js" charset="utf-8"></script>
+    <script type="text/javascript" src="../common/cookie.js" charset="utf-8"></script>
+    <script type="text/javascript" src="../common/jquery.mousewheel.js" charset="utf-8"></script>
+    <script type="text/javascript" src="../common/jquery.jscrollpane.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="welcome.js" charset="utf-8"></script>
+</head>
+<body>
+    <div><div class="step">
+
+        <p><span class="translate">FirstTimeRunning</span></p>
+        <div>
+            <div class="thumb-inner">
+                <a onclick="nextStep(); return false;" href="#">
+                    <img src="../../skins/default/gui/settings.png" />
+                </a>
+                <a class="title" onclick="nextStep(); return false;" href="#"><span class="translate">Setup</span></a>
+            </div>
+            <div class="description"><span class="translate">Setup_Description</span></div>
+        </div>
+
+
+        <div id="tutorials">
+            <div class="thumb-inner">
+                <a onclick="openTutorials();" href="#">
+                    <img src="../../skins/default/tutorial/tutorial.png" />
+                </a>
+                <a class="title" onclick="openTutorials();" href="#"><span class="translate">WelcomeTutorials</span></a>
+            </div>
+            <div class="description"><span class="translate">WelcomeTutorials_Description</span></div>
+        </div>
+        <div id="buy">
+            <div class="thumb-inner">
+                <a onclick="algodoo.BuyProduct();" href="#">
+                    <img src="buy.png" />
+                </a>
+                <a class="title" onclick="algodoo.BuyProduct();" href="#"><span class="translate">BuyProduct</span></a>
+            </div>
+            <div class="description"><span class="translate">BuyProduct_Tooltip</span></div>
+        </div>
+
+
+        <div id="content">
+            <div class="thumb-inner">
+                <a onclick="openContent();" href="#">
+                    <img src="../../skins/default/gui/load.png" />
+                </a>
+                <a class="title" onclick="openContent();" href="#"><span class="translate">Content</span></a>
+            </div>
+            <div class="description"><span class="translate">Content_Description</span></div>
+        </div>
+        <div id="lessons">
+            <div class="thumb-inner">
+                <a onclick="openLessons();" href="#">
+                    <img src="../../skins/default/gui/load.png" />
+                </a>
+                <a class="title" onclick="openLessons();" href="#"><span class="translate">WelcomeLessons</span></a>
+            </div>
+            <div class="description"><span class="translate">Lessons_Description</span></div>
+        </div>
+
+    </div></div>
+    <div><div class="step">
+
+        <h1 class="translate">WelcomeHeaderSetup</h1>
+        <div class="step_text"><span class="translate">WelcomeSetup</span>
+            <p class="translate">WelcomeIntro</p>
+        </div>
+        <div class="step_left">
+            <ul>
+                <li id="introLanguage"><div class="checked"></div><span class="translate">WelcomeSetLanguage</span></li>
+        	    <li id="introSkin"><div class="checked"></div><span class="translate">WelcomeSetSkin</span></li>
+            	<li id="introPlatform"><div class="checked"></div><span class="translate">WelcomeSetPlatform</span></li>
+        		<li id="introActivate"><div class="checked"></div><span class="translate">WelcomeSetActivate</span></li>
+            </ul>
+        </div>
+
+    </div></div>
+    
+    <div introCheck="introLanguage"><div class="step">
+
+        <h1 class="translate">WelcomeHeaderLanguage</h1>
+        <div class="step_text"><span class="translate">WelcomeLanguageText</span>
+            <h5><img src="../../skins/default/gui/settings.png" /><span class="translate">WelcomeLanguageInfo</span></h5>
+        </div>
+        <div class="step_left">
+            <ul id="languages">
+            </ul>
+        </div>
+
+    </div></div>
+    
+    <div introCheck="introSkin"><div class="step">
+
+        <h1 class="translate">WelcomeHeaderSkin</h1>
+        <div class="step_text"><span class="translate">WelcomeSkinText</span>
+            <h5><img src="../../skins/default/gui/settings.png" /><span class="translate">WelcomeSkinInfo</span></h5>
+	    </div>
+        <div class="step_left">
+            <ul>
+                <li id="default" onclick="algodoo.LoadSkinName('default');"><img src="dark_skin.png" width="80" style="padding-right: 15px;" /><label class="translate">WelcomeSkinDark</label><div class="checked" style="margin-top: 43px;" ></div></li>
+                <li id="white"   onclick="algodoo.LoadSkinName('white');"  ><img src="light_skin.png" width="80" style="padding-right: 15px;" /><label class="translate">WelcomeSkinLight</label><div class="checked" style="margin-top: 43px;" ></div></li>
+            </ul>
+        </div>
+
+    </div></div>
+    
+    <div introCheck="introPlatform"><div class="step">
+
+        <h1 class="translate">WelcomeHeaderPlatform</h1>
+        <div class="step_text"><span class="translate">WelcomePlatformText</span> 
+            <h5><img src="../../skins/default/gui/settings.png" /><span class="translate">WelcomePlatformInfo</span></h5>
+        </div>
+        <div class="step_left">
+            <ul>
+                <li id="keyboard" onclick="algodoo.SetTouchInput(false);$('#keyboard .checked').show();$('#touch .checked').hide();"><img src="computer_object.png" width="48px" /><br><label><span class="translate">WelcomePlatformKeyboard</span></label><div class="checked"></div></li>
+        	    <li id="touch" onclick="algodoo.SetTouchInput(true);$('#keyboard .checked').hide();$('#touch .checked').show();"><img src="smart_board_object.png" width="48px" /><br><label><span class="translate">WelcomePlatformTouch</span></label><div class="checked"></div></li>
+            </ul>
+        </div>
+
+    </div></div>
+    
+    <div id="activate"><div class="step">
+
+            <h1 class="translate">WelcomeHeaderActivate</h1>
+            <div class="step_text"><span class="translate">WelcomeActivateText</span>
+                <h5><img src="../../skins/default/gui/settings.png" /><span class="translate">WelcomeActivateInfo</span></h5>
+            </div>
+            <div class="step_left"></div>        
+            <div><div class="thumb-inner" style="margin-left: 75px;">
+                <a onclick="algodoo.OpenWidgetByID('Unlock'); return false;" href="#">
+                    <img src="../../skins/default/gui/activate.png"  />
+                </a>
+                <a class="title" onclick="algodoo.OpenWidgetByID('Unlock'); return false;" href="#"><span class="translate">Activate</span></a>
+            </div></div>
+    
+    </div></div>
+    
+    <div><div class="step">
+
+            <h1 class="translate">WelcomeHeaderOptions</h1>
+         	<div class="step_text"><span class="translate">WelcomeOptionsText</span> 
+        	    <h5><img src="../../skins/default/gui/settings.png" /><span class="translate">WelcomeOptionsInfo</span></h5>
+        	</div>
+            <div class="step_left"><img src="options.png" /></div>
+
+    </div></div>
+
+    <!--<div class="footer"></div>-->
+</body>
+
+

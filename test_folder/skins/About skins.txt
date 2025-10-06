@@ -1,0 +1,15 @@
+To make a skin you first need a skin file, on the form "My skin.cfg" in this folder.
+
+The skin file can set any variable in GUI.Skin; see "Default.cfg" for details.
+
+Each skin can replace a set of textures. Do this by creating a subfolder here named as your skin, and refer to it in the cfg like this:
+
+    textureDirs = ["My skin", "default"];
+
+This will tell Algodoo to look for textures first in your skin folder, then in the default folder (for any missing files).
+
+Once a .cfg is created it will show up in the Options->Skin menu.
+
+When changing a skin config file (.cfg), either click the skin name in the Algodoo Options menu to relaod it, or quickly reload everything but the textures usign the command App.GUI.Rebuild in the console.
+
+You may reuse and/or modify any of the included image files for your own Algodoo skins. So what are you waiting for, go make your own skin NOW!

@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+<head>
+	<title>Scenes</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Content-Language" content="EN" />
+    <script type="text/javascript" src="../common/jquery.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="../common/jquery-ui.min.js" charset="utf-8"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+  		$('img').bind('dragstart', function(event) { event.preventDefault(); });
+  	});
+	</script>
+	<script type="text/javascript" src="../common/translation.js"></script>
+	<script type="text/javascript" src="../common/english.js"></script>
+    <script type="text/javascript">
+        algodoo.ResetWait();
+    </script>
+	<link rel="stylesheet" type="text/css" media="screen" href="si_scenes.css" />
+</head>
+
+<body>
+    <div><div class="thumb-inner"><a onclick="algodoo.SelectFile('shooting_ball.phz'); return false;" href="#"><img src="shooting_ball.png" /></a><a class="scene-title" onclick="algodoo.SelectFile('shooting_ball.phz'); return false;" href="#">Shoot down the Beams</a></div></div>
+    <div><div class="thumb-inner"><a onclick="algodoo.SelectFile('seesaw.phz'); return false;" href="#"><img src="seesaw.png" /></a><a class="scene-title" onclick="algodoo.SelectFile('seesaw.phz'); return false;" href="#">Balance the Seesaw</a></div></div>
+    <div><div class="thumb-inner"><a onclick="algodoo.SelectFile('arch.phz'); return false;" href="#"><img src="arch.png" /></a><a class="scene-title" onclick="algodoo.SelectFile('arch.phz'); return false;" href="#">Build the Arch</a></div></div>
+    <div><div class="thumb-inner"><a onclick="algodoo.SelectFile('Optics.phz'); return false;" href="#"><img src="optics.png" /></a><a class="scene-title" onclick="algodoo.SelectFile('Optics.phz'); return false;" href="#">Explore with Optics</a></div></div>
+</body>
+

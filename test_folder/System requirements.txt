@@ -1,0 +1,13 @@
+Minimum system requirements:
+ * Windows XP or Vista, Linux or Mac OS
+ * 1 GHz CPU
+ * 256 MB of RAM
+ * Video card with 96MB of memory
+ * 40 MB of free hard disk space
+
+Recommended system requirements:
+ * Windows XP or Vista, Linux or Mac OSX 10.4
+ * 2 GHz CPU
+ * 1 GB of RAM
+ * Video card with 256MB of memory and shader model 2.0 support
+ * 100 MB of free hard disk space

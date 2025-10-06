@@ -1,0 +1,107 @@
+// FileVersion 16
+// Phunlet created by Algodoo v1.9.8
+
+FileInfo -> {
+    title = "rope";
+    author = "algoryx";
+    description = "The default Algodoo rope";
+    version = 16
+};
+Scene.addBox {
+    inertiaMultiplier := 1.0;
+    textureClamped := [false, false];
+    attractionType := 2;
+    attraction := 0.0;
+    textScale := 0.5;
+    texture := "rope_round.png";
+    controllerInvertX := false;
+    controllerInvertY := false;
+    showMomentum := false;
+    textConstrained := true;
+    percentCharged := 100.0;
+    restitution := 0.0;
+    isCharacter := false;
+    onCollide := (e)=>{};
+    killer := false;
+    materialVelocity := 0.0;
+    showForceArrows := false;
+    controllerReverseXY := false;
+    characterJumpSpeed := 7.0;
+    refractiveIndex := 1.5;
+    textureMatrix := [1.0, 0.0, 0.5, 0.0, 1.99, 0.5, 0.0, 0.0, 1.0];
+    immortal := false;
+    ruler := false;
+    collideSet := 1;
+    idealBattery := false;
+    drawBorder := false;
+    reflectiveness := 1.0;
+    breakLimit := +inf;
+    friction := 0.5;
+    color := [1.0, 0.61, 0.0, 1.0];
+    collideWater := true;
+    density := 1.0;
+    airFrictionMult := 1.0;
+    controllerAcc := 11.;
+    heteroCollide := true;
+    showVelocity := false;
+    opaqueBorders := true;
+    entityID := 262;
+    zDepth := 5.0;
+    layer := 0;
+    geomID := 221;
+    pos := [0.79439253517624242, 3.4639928755426324];
+    angle := 0.0;
+    vel := [0.0, 0.0];
+    angvel := 0.0;
+    size := [1.0, 0.31]
+};
+Scene.addHinge {
+    geom0 := 221;
+    geom0pos := [0.34375000000000000, 0.00000000000000000];
+    geom1 := 0;
+    geom1pos := [1.1381425351762424, 3.4639928905807333];
+    legacyMode := 1;
+    opaqueBorders := true;
+    autoBend := true;
+    motorSpeed := 1.5707963705062999;
+    hingeConstant := NaN;
+    impulseLimit := +inf;
+    motorTorque := 0.39062500000000000;
+    bendTarget := NaN;
+    bend := false;
+    ccw := false;
+    bendConstant := NaN;
+    motor := false;
+    color := [1.0, 0.61, 0.0, 1.0];
+    distanceLimit := +inf;
+    autoBrake := false;
+    entityID := 263;
+    zDepth := 7.0;
+    layer := 0;
+    size := 0.065984620225431348
+};
+Scene.addHinge {
+    geom0 := 221;
+    geom0pos := [-0.34375000000000000, 0.00000000000000000];
+    geom1 := 0;
+    geom1pos := [0.45064253517624242, 3.4639928905807333];
+    legacyMode := 1;
+    opaqueBorders := true;
+    autoBend := true;
+    motorSpeed := 1.5707963705062999;
+    hingeConstant := NaN;
+    impulseLimit := +inf;
+    motorTorque := 0.39062500000000000;
+    bendTarget := NaN;
+    bend := false;
+    ccw := false;
+    bendConstant := NaN;
+    motor := false;
+    color := [1.0, 0.61, 0.0, 1.0];
+    distanceLimit := +inf;
+    autoBrake := false;
+    entityID := 264;
+    zDepth := 6.0;
+    layer := 0;
+    size := 0.065984621880744915
+};

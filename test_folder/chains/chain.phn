@@ -1,0 +1,97 @@
+// FileVersion 15
+// Phunlet created by Algodoo v1.9.1
+
+FileInfo -> {
+    title = "chain";
+    author = "algoryx";
+    version = 15
+};
+Scene.addBox {
+    textScale := 0.5;
+    texture := "chain_link1.png";
+    restitution := 0.0;
+    onCollide := (e)=>{};
+    textureMatrix := [0.25, 0.0, 0.5, 0.0, 0.5, 0.5, 0.0, 0.0, 1.0];
+    textColor := [1.0, 1.0, 1.0, 1.0];
+    drawBorder := false;
+    color := [1.0, 1.0, 1.0, 1.0];
+    onHitByLaser := (e)=>{};
+    density := 7.5;
+    capacity := 1.08e+005;
+    heteroCollide := true;
+    resistivity := +inf;
+    entityID := 40;
+    zDepth := 0.0;
+    layer := 0;
+    geomID := 31;
+	pos := [0.75410797769144278, -0.80751173708920154];
+    angle := 0.0;
+    size := [4.0, 2.0]
+};
+Scene.addBox {
+    textScale := 0.5;
+    texture := "chain_link2.png";
+    restitution := 0.0;
+    onCollide := (e)=>{};
+    textureMatrix := [0.25, 0.0, 0.5, 0.0, 2.0, 0.5, 0.0, 0.0, 1.0];
+    textColor := [1.0, 1.0, 1.0, 1.0];
+    drawBorder := false;
+    color := [1.0, 1.0, 1.0, 1.0];
+    onHitByLaser := (e)=>{};
+    density := 7.5;
+    capacity := 4.32e+005;
+    heteroCollide := true;
+    resistivity := +inf;
+    entityID := 43;
+    zDepth := 1.0;
+    layer := 0;
+    geomID := 30;
+    pos := [-2.5757042218228987, -0.80751173708920154];
+    angle := 0.0;
+    size := [4.0, 0.5]
+};
+Scene.addHinge {
+    geom0 := 30;
+    geom0pos := [1.5356038474617217, -0.0041450621301120094];
+    geom1 := 31;
+    geom1pos := [-1.7942083520526197, -0.0041450621301120094];
+    attachment0 := -1;
+    attachment1 := -1;
+    motorElectrical := false;
+    motorTorque := 100.0;
+    color := [0.83297967096583581, 0.61259183281593488, 0.71483380746166736, 1.0];
+    entityID := 49;
+    zDepth := 3.0;
+    layer := 0;
+    size := 0.1825959487957238
+};
+Scene.addHinge {
+    geom0 := 30;
+    geom0pos := [-1.5247468604018006, -0.0041450621301120094];
+    geom1 := 0;
+    geom1pos := [-4.1004510822246996, -0.81165679921931355];
+    attachment0 := -1;
+    attachment1 := -1;
+    motorElectrical := false;
+    motorTorque := 100.0;
+    color := [0.83297967096583581, 0.61259183281593488, 0.71483380746166736, 1.0];
+    entityID := 52;
+    zDepth := 2.0;
+    layer := 0;
+    size := 0.1825959487957238
+};
+Scene.addHinge {
+    geom0 := 31;
+    geom0pos := [1.8082822710606106, -0.0041450621301120094];
+    geom1 := 0;
+    geom1pos := [2.5623902487520533, -0.81165679921931355];
+    attachment0 := -1;
+    attachment1 := -1;
+    motorElectrical := false;
+    motorTorque := 100.0;
+    color := [0.83297967096583581, 0.61259183281593488, 0.71483380746166736, 1.0];
+    entityID := 46;
+    zDepth := 4.0;
+    layer := 0;
+    size := 0.1825959487957238
+}

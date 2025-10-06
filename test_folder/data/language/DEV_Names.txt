@@ -1,0 +1,20 @@
+Geometry     ->   Shape? Surface?   (sv: Figur? Form?)
+Polygon      ->   Freeform? (sv: Friform?)
+Context menu ->   ?
+
+Phunlet      -> Prefab?  Scenelet?
+
+
+From Claude:
+Collision    -> Contact
+Help         -> "Help me!"
+Play/Pause   -> Split. "Play" / "Pause"
+Other things read "Pull this button for ... "  instead of
+"Pan the viewpoint" for instance.
+The "rewind" button reads "Undo sim start", but it's really
+a "Researt button" and should have the icon
+
+The «move» and «drag» tools should be represented with a
+hand icon as they are on most software.  The drag tool threw
+me off many time, and I did not understand why «drag» was
+different than «move»  in functionality.
