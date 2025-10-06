@@ -328,35 +328,39 @@ python cryptocore.py --algorithm aes --mode ctr --decrypt --key 0011223344556677
 
 
 
-# Совместимость с OpenSSL
-## Шифрование нашим инструментом - дешифрование OpenSSL
+Совместимость с OpenSSL
 
+Шифрование нашим инструментом - дешифрование OpenSSL
 
-```bash
-
+bash
 # 1. Шифрование CBC нашим инструментом
-
-python cryptocore.py --algorithm aes --mode cbc --encrypt --key 000102030405060708090a0b0c0d0e0f --input plaintext.bin --output cryptocore_cipher.bin
+python cryptocore.py --algorithm aes --mode cbc --encrypt \
+    --key 000102030405060708090a0b0c0d0e0f \
+    --input plaintext.bin --output cryptocore_cipher.bin
 
 # 2. Извлечение IV и шифртекста
-
-
 dd if=cryptocore_cipher.bin of=iv.bin bs=16 count=1
 dd if=cryptocore_cipher.bin of=ciphertext_only.bin bs=16 skip=1
 
 # 3. Дешифрование OpenSSL
+openssl enc -aes-128-cbc -d \
+    -K 000102030405060708090a0b0c0d0e0f \
+    -iv $(xxd -p iv.bin | tr -d '\n') \
+    -in ciphertext_only.bin \
+    -out openssl_decrypted.bin
 
-openssl enc -aes-128-cbc -d -K 000102030405060708090a0b0c0d0e0f -iv $(xxd -p iv.bin | tr -d '\n') -in ciphertext_only.bin -out openssl_decrypted.bin
-```
-
-## Шифрование OpenSSL - дешифрование нашим инструментом
-
-
-```bash
-
+Шифрование OpenSSL - дешифрование нашим инструментом
+bash
 # 1. Шифрование CBC OpenSSL
-openssl enc -aes-128-cbc -K 000102030405060708090a0b0c0d0e0f -iv 00112233445566778899aabbccddeeff -in plaintext.bin -out openssl_cipher.bin
+openssl enc -aes-128-cbc \
+    -K 000102030405060708090a0b0c0d0e0f \
+    -iv 00112233445566778899aabbccddeeff \
+    -in plaintext.bin \
+    -out openssl_cipher.bin
 
 # 2. Дешифрование нашим инструментом с явным IV
-python cryptocore.py --algorithm aes --mode cbc --decrypt --key 000102030405060708090a0b0c0d0e0f --iv 00112233445566778899aabbccddeeff --input openssl_cipher.bin --output cryptocore_decrypted.bin
-```
+python cryptocore.py --algorithm aes --mode cbc --decrypt \
+    --key 000102030405060708090a0b0c0d0e0f \
+    --iv 00112233445566778899aabbccddeeff \
+    --input openssl_cipher.bin \
+    --output cryptocore_decrypted.bin
