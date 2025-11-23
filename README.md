@@ -1,13 +1,22 @@
-CryptoCore - Криптографическая система для шифрования и дешифрования файлов с использованием AES-256 в режиме ECB.
+CryptoCore - Криптографическая система для шифрования и дешифрования файлов с использованием AES.
 
 Структура проекта
 ````text
 CryptoCore/
 ├── cryptocore.py # Главный исполняемый файл CLI
-├── main.py # Устаревший интерфейс (для обратной совместимости)
+├── main.py # Интерфейс 
 ├── setup.py # Конфигурация установки пакета
 ├── requirements.txt # Зависимости Python
 ├── README.md # Документация
+├── hash/                      # 🆕 Новая папка для хеш-функций
+│   ├── __init__.py
+│   ├── sha256.py              # 🆕 Реализация SHA-256 с нуля
+│   └── sha3_256.py            # 🆕 Реализация SHA3-256 с нуля
+├──tests/                        # Пакет тестов
+│   ├── __init__.py
+│   ├── test_sha256.py            # Тесты для реализации SHA-256
+│   ├── test_sha3_256.py          # Тесты для реализации SHA3-256
+│   └── test_csprng.py            # Тесты для CSPRNG модуля
 └── crypto/ # Пакет с ядром криптосистемы
     ├── init.py
     ├── cipher_core.py # AES шифрование/дешифрование
@@ -40,7 +49,7 @@ psutil>=5.8.0 - системная информация для генераци�
 pip install -r requirements.txt
 ````
 Инструкции по сборке и установке
-Способ 1: Запуск напрямую 
+
 bash
 ## Клонирование репозитория
 git clone <repository-url>
@@ -54,64 +63,145 @@ git push --force-with-lease origin master
 
 ```bash
 
-python3 -m venv venv
+python3 -m .venv venv
 ````
 
 ### Активируем виртуальное окружение
 
 ```bash
 
-source venv/bin/activate
+source .venv/bin/activate
 ```
-
-### Теперь pip будет работать в виртуальном окружении
 
 
 ### Установка зависимостей
-pip install -r requirements.txt
 
-### Проверка установки
-python cryptocore.py --help
-Способ 2: Установка как пакета
-bash
-## Установка в режиме разработки
-pip install -e .
-
-## Проверка установки
-cryptocore --help
-Инструкции по использованию
-
-## Базовый синтаксис команды
 ```bash
-python cryptocore.py --algorithm aes --mode ecb --encrypt/--decrypt --key <hex_key> --input <input_file> [--output <output_file>]
+
+pip install -r requirements.txt
 ````
+
+
+### Справка
+
+```bash
+
+python cryptocore.py --help
+````
+
 
 ## Генерация тестовых файлов
 
-Создание текстового тестового файла
-bash
-## Создание простого текстового файла
+### Создание простого текстового файла
+```bash
+
 echo "This is a test file for CryptoCore encryption" > test_document.txt
+````
 
-## Создание бинарного тестового файла
+### Создание бинарного тестового файла
+
+```bash
+
 python -c "import os; open('test_binary.bin', 'wb').write(os.urandom(1024))"
+````
 
 
-## Шифрование с явным указанием выходного файла
+
+
+## Тестирование шифрования
+
+### Шифрование с явным указанием выходного файла
 ```bash
 
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input document.txt --output document.enc
 ```
 
-# Шифрование с автоматическим именем выходного файла
+### Шифрование с автоматическим именем выходного файла
 
 ```bash
+
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input data.csv
 ```
 
-## Шифрование PDF документа
+
+### Шифрование с автоматической генерацией ключа
 
 ```bash
+
+python cryptocore.py --algorithm aes --mode ctr --encrypt --input plaintext.txt --output ciphertext.bin
+```
+
+### Шифрование с явным ключом
+
+```bash
+
+python cryptocore.py --algorithm aes --mode cbc --encrypt --key 00112233445566778899aabbccddeeff --input document.pdf --output document.pdf.enc
+````
+### Дешифрование (ключ обязателен)
+
+```bash
+
+python cryptocore.py --algorithm aes --mode cbc --decrypt --key 00112233445566778899aabbccddeeff --input document.pdf.enc --output document_decrypted.pdf
+```
+
+### Генерация тестового ключа
+
+```bash
+
+python -c "from csprng import generate_key; print('Random key:', generate_key(16).hex())"
+```
+
+## Тестирование
+
+### Запуск unit-тестов
+
+```bash
+python tests/test_csprng.py
+````
+### Генерация данных для тестов NIST
+```bash
+python tests/test_csprng.py
+````
+### Проверка уникальности ключей
+```bash
+
+````
+
+## Тестирование с NIST Statistical Test Suite
+
+### 1. Установка NIST STS
+
+### Скачайте с официального сайта NIST
+
+```bash
+wget https://csrc.nist.gov/CSRC/media/Projects/Random-Bit-Generation/documents/sts-2_1_2.zip
+````
+```bash
+unzip sts-2_1_2.zip
+````
+```bash
+cd sts-2_1_2
+````
+```bash
+make
+````
+### 2. Генерация тестовых данных
+
+```bash
+python tests/test_csprng.py
+```
+### 3. Запуск тестов NIST
+
+```bash
+./assess 10000000
+```
+
+### Следуйте инструкциям для указания файла nist_test_data.bin
+#### адрес файла
+#### /home/morst/PycharmProjects/CryptoCore_3/tests/nist_test_data.bin
+## Шифрование PDF документа
+
+```bashsource .venv/bin/activate
 
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf --output document.pdf.enc
 ````
@@ -119,12 +209,16 @@ python cryptocore.py --algorithm aes --mode ecb --encrypt --key 0001020304050607
 
 ```bash 
 
-python cryptocore.py --algorithm aes --mode ecb --decrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf.enc --output document_restored.pdf
+python cryptocore.py --algorithmsource .venv/bin/activate aes --mode ecb --decrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf.enc --output document_restored.pdf
 ````
-# Шифрование ZIP архива
+## Шифрование ZIP архива
+
+```bash
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key aabbccddeeff00112233445566778899 --input archive.zip
-Шифрование изображений
-bash
+````
+
+## Шифрование изображений
+```bash
 # Шифрование JPEG изображения
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 11223344556677889900aabbccddeeff --input image.jpg --output image.jpg.enc
 
@@ -153,7 +247,7 @@ python cryptocore.py --algorithm aes --mode ecb --decrypt --key aabbccddeeff0011
 # AES-128 (16 байт, 32 hex символа)
 ```bash
 python -c "import os; print('AES-128 key:', os.urandom(16).hex())"
-````
+```
 
 ## Примеры валидных ключей для тестирования
 
@@ -185,19 +279,13 @@ python -c "print('Files are identical' if open('test_original.txt', 'rb').read()
 # 5. Проверка хешей
 
 ### certutil -hashfile test_original.txt SHA256  # Windows
+
 ### sha256sum test_original.txt test_decrypted.txt  # Linux/Mac
 
 
-```bash
 
-diff test_original.txt decrypted_test.txt
-```
 
-### Проверка справки
 
-```bash
-python cryptocore.py --help
-````
 
 
 ## Проверка валидации аргументов (должны вызвать ошибки)
@@ -259,13 +347,13 @@ python cryptocore.py --algorithm aes --mode ecb --encrypt --key 0011223344556677
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input test_original.txt --output test_encrypted.bin
+python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input document.pdf --output document_encrypted.bin
 ````
 ### Дешифрование файла в режиме
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode ecb --decrypt --key 00112233445566778899aabbccddeeff --input test_encrypted.bin --output test_decrypted.txt
+python cryptocore.py --algorithm aes --mode ecb --decrypt --key 00112233445566778899aabbccddeeff --input document_encrypted.bin --output document_decrypted.pdf
 ````
 
 
@@ -298,14 +386,14 @@ python cryptocore.py --algorithm aes --mode cbc --decrypt --key 0011223344556677
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode cfb --encrypt --key 00112233445566778899aabbccddeeff --input image.jpg --output image.jpg.cfb.enc
+python cryptocore.py --algorithm aes --mode cfb --encrypt --key 00112233445566778899aabbccddeeff --input document.pdf --output document_encrypted.pdf.cfb.enc
 ```
 
 ### Дешифрование файла в режиме CFB
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode cfb --decrypt --key 00112233445566778899aabbccddeeff --input image.jpg.cfb.enc --output image_restored.jpg
+python cryptocore.py --algorithm aes --mode cfb --decrypt --key 00112233445566778899aabbccddeeff --input document_encrypted.pdf.cfb.enc --output document_encrypted.pdf
 ```
 
 
@@ -341,14 +429,12 @@ python cryptocore.py --algorithm aes --mode ctr --decrypt --key 0011223344556677
 ```
 
 
-
-
-
 ## Совместимость с OpenSSL
 
-### Шифрование нашим инструментом - дешифрование OpenSSL
+### Шифрование CryptoCore - дешифрование OpenSSL
 
 ```bash
+
 # 1. Шифрование CBC нашим инструментом
 python cryptocore.py --algorithm aes --mode cbc --encrypt --key 000102030405060708090a0b0c0d0e0f --input plaintext.bin --output cryptocore_cipher.bin
 
@@ -362,14 +448,72 @@ openssl enc -aes-128-cbc -d -K 000102030405060708090a0b0c0d0e0f -iv $(xxd -p iv.
 cmp plaintext.bin openssl_decrypted.bin && echo "✓ Files are identical" || echo "✗ Files differ"
 
 ```
-### Шифрование OpenSSL - дешифрование нашим инструментом
+### Шифрование OpenSSL - дешифрование CryptoCore
 ```bash
 
 # 1. Шифрование CBC OpenSSL
+
+
 openssl enc -aes-128-cbc -K 000102030405060708090a0b0c0d0e0f -iv 00112233445566778899aabbccddeeff -in plaintext.bin -out openssl_cipher.bin
 
 # 2. Дешифрование нашим инструментом с явным IV
 python cryptocore.py --algorithm aes --mode cbc --decrypt --key 000102030405060708090a0b0c0d0e0f --iv 00112233445566778899aabbccddeeff --input openssl_cipher.bin --output cryptocore_decrypted.bin
 
 cmp plaintext.bin cryptocore_decrypted.bin && echo "✓ Files are identical" || echo "✗ Files differ"
+```
+
+
+
+## Хэш - функции
+
+### Вычисление SHA-256 хеша файла
+```bash
+
+python cryptocore.py dgst --algorithm sha256 --input document.pdf
+```
+### Вычисление SHA3-256 хеша файла
+
+```bash
+
+python cryptocore.py dgst --algorithm sha3-256 --input backup.tar
+```
+### Сохранение хеша в файл
+
+```bash
+
+python cryptocore.py dgst --algorithm sha256 --input file.txt --output file.sha256
+```
+### Хеширование с выводом только хеш-значения (для скриптов)
+
+```bash
+
+python cryptocore.py dgst --algorithm sha256 --input data.bin | cut -d' ' -f1
+```
+
+### Проверка известных тестовых векторов
+```bash
+
+echo -n "abc" | python -c "
+import sys
+from hash.sha256 import sha256
+from hash.sha3_256 import sha3_256
+data = sys.stdin.buffer.read()
+print('SHA256:', sha256(data))
+print('SHA3-256:', sha3_256(data))
+"
+echo "test" > test_file.txt
+python cryptocore.py dgst --algorithm sha256 --input test_file.txt
+sha256sum test_file.txt  
+```
+
+### Тестирование
+
+```bash
+python tests/performance_comparison.py
+```
+### Help
+
+```bash
+
+python cryptocore.py dgst --help
 ```
