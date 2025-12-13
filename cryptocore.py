@@ -18,6 +18,7 @@ from crypto.crypto_exception import CryptoException
 from csprng import CSPRNG
 from hash.sha256 import sha256_file
 from hash.sha3_256 import sha3_256_file
+from mac.hmac import hmac_sha256_file, verify_hmac_file  # 🆕 Импорт HMAC функций
 
 
 class CryptoCoreCLI:
@@ -25,49 +26,22 @@ class CryptoCoreCLI:
 
     @staticmethod
     def create_parser():
-        """Создание парсера аргументов с поддержкой старого и нового синтаксиса"""
+        """Создание парсера аргументов"""
         parser = argparse.ArgumentParser(
-            description='CryptoCore - Cryptographic File Encryption/Decryption and Hashing Tool',
+            description='CryptoCore - Cryptographic File Encryption/Decryption, Hashing, and HMAC Tool',
             epilog='Examples:\n'
-                   '  # Encryption (old syntax):\n'
-                   '  cryptocore --algorithm aes --mode ctr --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output ciphertext.bin\n\n'
-                   '  # Encryption (new syntax):\n'
-                   '  cryptocore encrypt --algorithm aes --mode ctr --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output ciphertext.bin\n\n'
                    '  # Hash computation:\n'
                    '  cryptocore dgst --algorithm sha256 --input document.pdf\n\n'
-                   '  # Hash with output to file:\n'
-                   '  cryptocore dgst --algorithm sha3-256 --input backup.tar --output backup.sha3',
+                   '  # HMAC generation:\n'
+                   '  cryptocore dgst --algorithm sha256 --hmac --key 00112233445566778899aabbccddeeff --input message.txt\n\n'
+                   '  # HMAC verification:\n'
+                   '  cryptocore dgst --algorithm sha256 --hmac --key 00112233445566778899aabbccddeeff --input message.txt --verify expected_hmac.txt\n\n'
+                   '  # Encryption (old syntax):\n'
+                   '  cryptocore --algorithm aes --mode ctr --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output ciphertext.bin',
             formatter_class=argparse.RawDescriptionHelpFormatter
         )
 
-        # 🆕 Создаем subparsers для новых команд
-        subparsers = parser.add_subparsers(dest='command', help='Command to execute')
-
-        # 🆕 Subcommand for hash operations
-        dgst_parser = subparsers.add_parser('dgst', help='Compute message digest (hash)')
-
-        dgst_parser.add_argument(
-            '--algorithm',
-            required=True,
-            choices=['sha256', 'sha3-256'],
-            help='Hash algorithm (sha256, sha3-256)'
-        )
-
-        dgst_parser.add_argument(
-            '--input',
-            required=True,
-            help='Path to input file to be hashed'
-        )
-
-        dgst_parser.add_argument(
-            '--output',
-            help='Optional: write hash output to file instead of stdout'
-        )
-
-        # 🆕 Subcommand for encryption/decryption (новый синтаксис)
-        encrypt_parser = subparsers.add_parser('encrypt', help='Encryption/decryption operations (new syntax)')
-
-        # Старый синтаксис (прямые аргументы) - для обратной совместимости
+        # Old syntax arguments (for backward compatibility)
         parser.add_argument(
             '--algorithm',
             help='Encryption algorithm (aes) - for backward compatibility'
@@ -78,7 +52,6 @@ class CryptoCoreCLI:
             help='Encryption mode (ecb, cbc, ctr, cfb, ofb) - for backward compatibility'
         )
 
-        # Взаимоисключающие флаги операции (для старого синтаксиса)
         operation_group = parser.add_mutually_exclusive_group()
         operation_group.add_argument(
             '--encrypt',
@@ -94,8 +67,8 @@ class CryptoCoreCLI:
 
         parser.add_argument(
             '--key',
-            help='Encryption key as hexadecimal string (16, 24, or 32 bytes for AES). '
-                 'If omitted for encryption, a secure random key will be generated and displayed.'
+            help='Encryption/HMAC key as hexadecimal string. '
+                 'For HMAC: arbitrary length. For AES: 16, 24, or 32 bytes.'
         )
 
         parser.add_argument(
@@ -104,6 +77,93 @@ class CryptoCoreCLI:
         )
 
         parser.add_argument(
+            '--output',
+            help='Path to output file (default: generated based on operation)'
+        )
+
+        # New syntax subparsers
+        subparsers = parser.add_subparsers(dest='command', help='Command to execute')
+
+        # 🆕 Subcommand for hash/HMAC operations
+        dgst_parser = subparsers.add_parser('dgst', help='Compute hash or HMAC of a file')
+
+        dgst_parser.add_argument(
+            '--algorithm',
+            required=True,
+            choices=['sha256', 'sha3-256'],
+            help='Hash algorithm (sha256, sha3-256)'
+        )
+
+        dgst_parser.add_argument(
+            '--hmac',
+            action='store_true',
+            help='Enable HMAC mode (requires --key)'
+        )
+
+        dgst_parser.add_argument(
+            '--key',
+            help='Key for HMAC mode (hex string, arbitrary length). Required when --hmac is specified.'
+        )
+
+        dgst_parser.add_argument(
+            '--input',
+            required=True,
+            help='Path to input file to be hashed'
+        )
+
+        dgst_parser.add_argument(
+            '--output',
+            help='Optional: write output to file instead of stdout'
+        )
+
+        dgst_parser.add_argument(
+            '--verify',
+            help='Optional: verify against existing hash/HMAC file'
+        )
+
+        # Subcommand for encryption/decryption (new syntax)
+        encrypt_parser = subparsers.add_parser('encrypt', help='Encryption/decryption operations (new syntax)')
+
+        encrypt_parser.add_argument(
+            '--algorithm',
+            required=True,
+            choices=['aes'],
+            help='Encryption algorithm (currently only aes supported)'
+        )
+
+        encrypt_parser.add_argument(
+            '--mode',
+            required=True,
+            choices=['ecb', 'cbc', 'ctr', 'cfb', 'ofb'],
+            help='Encryption mode (ecb, cbc, ctr, cfb, ofb)'
+        )
+
+        encrypt_op_group = encrypt_parser.add_mutually_exclusive_group(required=True)
+        encrypt_op_group.add_argument(
+            '--encrypt',
+            action='store_true',
+            help='Perform encryption operation'
+        )
+
+        encrypt_op_group.add_argument(
+            '--decrypt',
+            action='store_true',
+            help='Perform decryption operation'
+        )
+
+        encrypt_parser.add_argument(
+            '--key',
+            help='Encryption key as hexadecimal string (16, 24, or 32 bytes for AES). '
+                 'If omitted for encryption, a secure random key will be generated and displayed.'
+        )
+
+        encrypt_parser.add_argument(
+            '--input',
+            required=True,
+            help='Path to input file'
+        )
+
+        encrypt_parser.add_argument(
             '--output',
             help='Path to output file (default: generated based on operation)'
         )
@@ -118,16 +178,23 @@ class CryptoCoreCLI:
 
     @staticmethod
     def is_legacy_syntax(args):
-        """Проверяем, используется ли старый синтаксис"""
-        return (args.algorithm is not None or
-                args.mode is not None or
+        """Проверяем, используется ли старый синтаксис шифрования"""
+        return (args.algorithm == 'aes' or
+                (args.mode and args.mode in ['ecb', 'cbc', 'ctr', 'cfb', 'ofb']) or
                 args.encrypt or
                 args.decrypt)
 
     @staticmethod
-    def validate_hex_key(key_str: str) -> bytes:
+    def validate_hex_key(key_str: str, for_hmac: bool = False) -> bytes:
         """
         Валидация и преобразование hex-ключа в байты
+
+        Args:
+            key_str: Key as hex string
+            for_hmac: True if key is for HMAC (arbitrary length allowed)
+
+        Returns:
+            bytes: Key as bytes
         """
         if not key_str:
             raise ValueError("Key cannot be empty")
@@ -142,7 +209,14 @@ class CryptoCoreCLI:
         if not all(c in '0123456789abcdef' for c in key_str):
             raise ValueError("Key must be a valid hexadecimal string")
 
-        # Проверяем длину ключа
+        # Для HMAC: произвольная длина
+        if for_hmac:
+            try:
+                return bytes.fromhex(key_str)
+            except ValueError as e:
+                raise ValueError(f"Invalid hex key: {e}")
+
+        # Для AES: проверяем длину ключа
         key_length = len(key_str)
         if key_length not in [32, 48, 64]:  # 16, 24, 32 байта в hex
             raise ValueError(
@@ -183,32 +257,104 @@ class CryptoCoreCLI:
                 return str(input_path.with_suffix(input_path.suffix + '.dec'))
 
     @staticmethod
-    def process_hash_operation(args):
+    def read_expected_hash(filename: str) -> str:
         """
-        Обработка операции хеширования
+        Read expected hash/HMAC from file
+
+        Args:
+            filename: Path to file containing expected hash
+
+        Returns:
+            str: Hash value (hex string)
+        """
+        try:
+            with open(filename, 'r') as f:
+                content = f.read().strip()
+
+            # Parse format: HASH_VALUE FILENAME
+            # We extract just the hash part
+            parts = content.split()
+            if not parts:
+                raise ValueError("Empty hash file")
+
+            # The hash is the first part (hex string)
+            hash_value = parts[0].lower()
+
+            # Validate it looks like a hex string
+            if not all(c in '0123456789abcdef' for c in hash_value):
+                raise ValueError(f"Invalid hash format in file: {hash_value}")
+
+            return hash_value
+
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Hash file not found: {filename}")
+        except IOError as e:
+            raise IOError(f"Error reading hash file {filename}: {e}")
+
+    @staticmethod
+    def process_dgst_operation(args):
+        """
+        Обработка операции хеширования/HMAC
         """
         try:
             # Проверка существования входного файла
             if not os.path.exists(args.input):
                 raise FileNotFoundError(f"Input file not found: {args.input}")
 
-            # Выбор алгоритма хеширования
-            if args.algorithm == 'sha256':
-                hash_value = sha256_file(args.input)
-            elif args.algorithm == 'sha3-256':
-                hash_value = sha3_256_file(args.input)
-            else:
-                raise ValueError(f"Unsupported hash algorithm: {args.algorithm}")
+            # Проверка HMAC режима
+            if args.hmac:
+                if not args.key:
+                    raise ValueError("--key is required when --hmac is specified")
 
-            # Форматирование вывода в стиле *sum tools
-            output_line = f"{hash_value}  {args.input}\n"
+                # Валидация ключа для HMAC (произвольная длина)
+                key_bytes = CryptoCoreCLI.validate_hex_key(args.key, for_hmac=True)
+
+                # Выбор алгоритма хеширования для HMAC
+                if args.algorithm == 'sha256':
+                    # Используем нашу реализацию HMAC-SHA256
+                    computed_value = hmac_sha256_file(key_bytes, args.input)
+                    operation_type = "HMAC-SHA256"
+                elif args.algorithm == 'sha3-256':
+                    # Для SHA3-256 HMAC не реализован в требованиях
+                    raise ValueError("HMAC with SHA3-256 is not supported in this sprint")
+                else:
+                    raise ValueError(f"Unsupported algorithm for HMAC: {args.algorithm}")
+            else:
+                # Обычное хеширование
+                if args.algorithm == 'sha256':
+                    computed_value = sha256_file(args.input)
+                    operation_type = "SHA-256"
+                elif args.algorithm == 'sha3-256':
+                    computed_value = sha3_256_file(args.input)
+                    operation_type = "SHA3-256"
+                else:
+                    raise ValueError(f"Unsupported hash algorithm: {args.algorithm}")
+
+            # Проверка если указан --verify
+            if args.verify:
+                expected_value = CryptoCoreCLI.read_expected_hash(args.verify)
+
+                if computed_value.lower() == expected_value.lower():
+                    print(f"[OK] {operation_type} verification successful")
+                    return True
+                else:
+                    print(f"[ERROR] {operation_type} verification failed", file=sys.stderr)
+                    print(f"Computed: {computed_value}", file=sys.stderr)
+                    print(f"Expected: {expected_value}", file=sys.stderr)
+                    return False
+
+            # Форматирование вывода
+            if args.hmac:
+                output_line = f"{computed_value}  {args.input}\n"
+            else:
+                output_line = f"{computed_value}  {args.input}\n"
 
             # Вывод результата
             if args.output:
                 # Запись в файл
                 with open(args.output, 'w') as f:
                     f.write(output_line)
-                print(f"Hash written to: {args.output}")
+                print(f"{operation_type} written to: {args.output}")
             else:
                 # Вывод в stdout
                 print(output_line, end='')
@@ -232,7 +378,7 @@ class CryptoCoreCLI:
             if args.encrypt:
                 if args.key:
                     # Используем предоставленный ключ
-                    key_bytes = CryptoCoreCLI.validate_hex_key(args.key)
+                    key_bytes = CryptoCoreCLI.validate_hex_key(args.key, for_hmac=False)
                     CryptoCoreCLI.check_key_strength(key_bytes)
                 else:
                     # Генерируем случайный ключ
@@ -243,7 +389,7 @@ class CryptoCoreCLI:
             else:  # decrypt
                 if not args.key:
                     raise ValueError("Key is required for decryption operations")
-                key_bytes = CryptoCoreCLI.validate_hex_key(args.key)
+                key_bytes = CryptoCoreCLI.validate_hex_key(args.key, for_hmac=False)
 
             # Генерация выходного файла если не указан
             output_path = args.output
@@ -336,7 +482,9 @@ class CryptoCoreCLI:
         Основной обработчик операций
         """
         if args.command == 'dgst':
-            return CryptoCoreCLI.process_hash_operation(args)
+            return CryptoCoreCLI.process_dgst_operation(args)
+        elif args.command == 'encrypt':
+            return CryptoCoreCLI.process_crypto_operation(args)
         elif CryptoCoreCLI.is_legacy_syntax(args):
             # Старый синтаксис - проверяем обязательные аргументы
             if not args.algorithm:
@@ -349,19 +497,9 @@ class CryptoCoreCLI:
                 raise ValueError("--input is required")
 
             return CryptoCoreCLI.process_crypto_operation(args)
-        elif args.command == 'encrypt':
-            # Новый синтаксис для шифрования
-            if not hasattr(args, 'algorithm') or not args.algorithm:
-                raise ValueError("--algorithm is required for encryption/decryption")
-            if not hasattr(args, 'mode') or not args.mode:
-                raise ValueError("--mode is required for encryption/decryption")
-            if not hasattr(args, 'input') or not args.input:
-                raise ValueError("--input is required")
-
-            return CryptoCoreCLI.process_crypto_operation(args)
         else:
             # Если команда не указана, покажем помощь
-            if not args.command and not CryptoCoreCLI.is_legacy_syntax(args):
+            if not args.command:
                 CryptoCoreCLI.create_parser().print_help()
                 return False
             else:

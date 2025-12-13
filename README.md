@@ -8,14 +8,18 @@ CryptoCore/
 ├── setup.py # Конфигурация установки пакета
 ├── requirements.txt # Зависимости Python
 ├── README.md # Документация
-├── hash/                      # 🆕 Новая папка для хеш-функций
+├── hash/                      # папка для хеш-функций
 │   ├── __init__.py
-│   ├── sha256.py              # 🆕 Реализация SHA-256 с нуля
-│   └── sha3_256.py            # 🆕 Реализация SHA3-256 с нуля
+│   ├── sha256.py              # Реализация SHA-256 
+│   └── sha3_256.py            # Реализация SHA3-256
+├── mac/                      # MAC
+│   ├── __init__.py
+│   └── hmac.py            # Реализация HMAC
 ├──tests/                        # Пакет тестов
 │   ├── __init__.py
 │   ├── test_sha256.py            # Тесты для реализации SHA-256
 │   ├── test_sha3_256.py          # Тесты для реализации SHA3-256
+│   ├── test_hmac.py          # Тесты для реализации HMAC
 │   └── test_csprng.py            # Тесты для CSPRNG модуля
 └── crypto/ # Пакет с ядром криптосистемы
     ├── init.py
@@ -516,4 +520,57 @@ python tests/performance_comparison.py
 ```bash
 
 python cryptocore.py dgst --help
+```
+
+
+## HMAC
+
+###  Что такое HMAC?
+
+**HMAC (Hash-based Message Authentication Code)** - это механизм для проверки 
+аутентичности и целостности сообщений с использованием криптографических хеш-функций 
+и секретного ключа. Реализация соответствует **RFC 2104** и использует SHA-256 в 
+качестве базовой хеш-функции.
+
+### Базовый синтаксис:
+```bash
+
+# Для HMAC операций используется подкоманда dgst с флагом --hmac
+cryptocore dgst --algorithm sha256 --hmac --key <HEX_KEY> --input <FILE> [опции]
+```
+### ТЕСТ HMAC ФУНКЦИОНАЛЬНОСТИ
+
+```bash
+#!/bin/bash
+echo " КОМПЛЕКСНЫЙ ТЕСТ HMAC ФУНКЦИОНАЛЬНОСТИ"
+echo "=========================================="
+
+# 1. Создание тестовых файлов
+echo "1. Создание тестовых файлов..."
+echo "Тестовый документ 1" > doc1.tmp
+echo "Тестовый документ 2" > doc2.tmp
+python3 -c "import os; open('binary.tmp', 'wb').write(os.urandom(1024))"
+
+# 2. Генерация HMAC
+echo -e "\n2. Генерация HMAC для файлов..."
+KEY="746573745f6b65795f31323334353637383930616263646566"  # hex версия "test_key_1234567890abcdef"
+python cryptocore.py dgst --algorithm sha256 --hmac --key $KEY --input doc1.tmp > doc1.hmac
+python cryptocore.py dgst --algorithm sha256 --hmac --key $KEY --input doc2.tmp > doc2.hmac
+python cryptocore.py dgst --algorithm sha256 --hmac --key $KEY --input binary.tmp > binary.hmac
+
+# 3. Верификация
+echo -e "\n3. Верификация HMAC..."
+python cryptocore.py dgst --algorithm sha256 --hmac --key $KEY --input doc1.tmp --verify doc1.hmac && echo "  ✅ doc1.tmp: OK"
+python cryptocore.py dgst --algorithm sha256 --hmac --key $KEY --input doc2.tmp --verify doc2.hmac && echo "  ✅ doc2.tmp: OK"
+python cryptocore.py dgst --algorithm sha256 --hmac --key $KEY --input binary.tmp --verify binary.hmac && echo "  ✅ binary.tmp: OK"
+
+# 4. Тест обнаружения изменений
+echo -e "\n4. Тест обнаружения изменений..."
+echo "Измененное содержимое" > doc1.tmp
+python cryptocore.py dgst --algorithm sha256 --hmac --key $KEY --input doc1.tmp --verify doc1.hmac || echo "  ✅ Обнаружено изменение doc1.tmp"
+
+# 5. Очистка
+echo -e "\n5. Очистка тестовых файлов..."
+rm -f *.tmp *.hmac
+echo "✅ Тестирование завершено"
 ```
