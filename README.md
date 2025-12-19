@@ -30,9 +30,14 @@ CryptoCore/
     ├── file_processor.py # Обработка файлов
     ├── generator.py # Генератор случайных данных
     ├── key_generator.py # Кастомный генератор ключей
+    ├── aead/   # Новый модуль для AEAD
+    │    ├── __init__.py
+    │    ├── encrypt_then_mac.py  # Encrypt-then-MAC реализация
+    │    └──  gcm.py  # GCM реализация
     └── modes # Директория с режимами шифрования
         ├── init.py
         ├── base_mode.py # Базовый класс режимов
+        ├── gcm_mode.py  # Адаптер GCM для CLI
         ├── cbc_mode.py # Режим CBC
         ├── cfb_mode.py # Режим CFB
         ├── ofb_mode.py # Режим OFB
@@ -205,7 +210,7 @@ python tests/test_csprng.py
 #### /home/morst/PycharmProjects/CryptoCore_3/tests/nist_test_data.bin
 ## Шифрование PDF документа
 
-```bashsource .venv/bin/activate
+```bash
 
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 000102030405060708090a0b0c0d0e0f --input document.pdf --output document.pdf.enc
 ````
@@ -288,10 +293,6 @@ python -c "print('Files are identical' if open('test_original.txt', 'rb').read()
 
 
 
-
-
-
-
 ## Проверка валидации аргументов (должны вызвать ошибки)
 ### Неверный алгоритм
 
@@ -351,7 +352,7 @@ python cryptocore.py --algorithm aes --mode ecb --encrypt --key 0011223344556677
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input document.pdf --output document_encrypted.bin
+python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output document_encrypted.bin
 ````
 ### Дешифрование файла в режиме
 
@@ -368,7 +369,7 @@ python cryptocore.py --algorithm aes --mode ecb --decrypt --key 0011223344556677
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode cbc --encrypt --key 00112233445566778899aabbccddeeff --input document.pdf --output document.pdf.cbc.enc
+python cryptocore.py --algorithm aes --mode cbc --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output document.pdf.cbc.enc
 ````
 ### Дешифрование файла (IV читается из файла автоматически)
 
@@ -390,7 +391,7 @@ python cryptocore.py --algorithm aes --mode cbc --decrypt --key 0011223344556677
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode cfb --encrypt --key 00112233445566778899aabbccddeeff --input document.pdf --output document_encrypted.pdf.cfb.enc
+python cryptocore.py --algorithm aes --mode cfb --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output document_encrypted.pdf.cfb.enc
 ```
 
 ### Дешифрование файла в режиме CFB
@@ -407,7 +408,7 @@ python cryptocore.py --algorithm aes --mode cfb --decrypt --key 0011223344556677
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode ofb --encrypt --key 00112233445566778899aabbccddeeff --input data.bin --output data.bin.ofb.enc
+python cryptocore.py --algorithm aes --mode ofb --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output data.bin.ofb.enc
 ````
 ### Дешифрование файла в режиме OFB
 
@@ -423,7 +424,7 @@ python cryptocore.py --algorithm aes --mode ofb --decrypt --key 0011223344556677
 
 ```bash
 
-python cryptocore.py --algorithm aes --mode ctr --encrypt --key 00112233445566778899aabbccddeeff --input archive.zip --output archive.zip.ctr.enc
+python cryptocore.py --algorithm aes --mode ctr --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output archive.zip.ctr.enc
 ````
 ### Дешифрование файла в режиме CTR
 
@@ -505,9 +506,9 @@ data = sys.stdin.buffer.read()
 print('SHA256:', sha256(data))
 print('SHA3-256:', sha3_256(data))
 "
-echo "test" > test_file.txt
-python cryptocore.py dgst --algorithm sha256 --input test_file.txt
-sha256sum test_file.txt  
+echo "test" > plaintext.txt
+python cryptocore.py dgst --algorithm sha256 --input plaintext.txt
+sha256sum plaintext.txt  
 ```
 
 ### Тестирование
@@ -574,3 +575,95 @@ echo -e "\n5. Очистка тестовых файлов..."
 rm -f *.tmp *.hmac
 echo "✅ Тестирование завершено"
 ```
+
+
+## Аутентифицированное Шифрование (AEAD)
+
+1. **GCM (Galois/Counter Mode)** - Аутентифицированный режим шифрования AES
+2. **Encrypt-then-MAC** - Композитный подход (шифрование + HMAC)
+
+**AEAD (Authenticated Encryption with Associated Data)** - это криптографический примитив, который одновременно обеспечивает:
+- **Конфиденциальность** - данные зашифрованы
+- **Целостность** - данные не были изменены
+- **Аутентичность** - данные созданы отправителем с секретным ключом
+- **Аутентичность дополнительных данных** - метаданные также защищены
+
+#### Базовый синтаксис GCM:
+```bash
+# Шифрование с AAD
+python cryptocore.py encrypt --algorithm aes --mode gcm --encrypt \
+  --key 00112233445566778899aabbccddeeff \
+  --input plaintext.txt --output ciphertext.bin \
+  --aad aabbccddeeff
+```
+
+```bash
+# Дешифрование с AAD
+python cryptocore.py encrypt --algorithm aes --mode gcm --decrypt \
+  --key 00112233445566778899aabbccddeeff \
+  --input ciphertext.bin --output decrypted.txt \
+  --aad aabbccddeeff
+```
+
+
+python -m unittest discover tests -v
+
+
+### Комплексное тестирование GSM
+
+```bash
+
+python -m unittest tests.test_gcm.TestGCM -v
+```
+
+### Cкрипт для проверки GCM
+
+```bash
+#!/bin/bash
+echo "ТЕСТИРОВАНИЕ GCM РЕАЛИЗАЦИИ"
+echo "==============================="
+
+# 1. Создаем тестовые файлы
+echo "1. Создание тестовых файлов..."
+echo "Тестовые данные" > test_input.txt
+echo "Аутентификационные данные" > aad_content.txt
+
+# 2. Конвертируем AAD в hex
+AAD_HEX=$(python -c "with open('aad_content.txt', 'rb') as f: print(f.read().hex())")
+
+# 3. Шифрование
+echo -e "\n2. Шифрование GCM..."
+python cryptocore.py encrypt --algorithm aes --mode gcm --encrypt \
+  --key 00112233445566778899aabbccddeeff \
+  --input test_input.txt --output encrypted.gcm \
+  --aad $AAD_HEX
+
+# 4. Дешифрование
+echo -e "\n3. Дешифрование GCM..."
+python cryptocore.py encrypt --algorithm aes --mode gcm --decrypt \
+  --key 00112233445566778899aabbccddeeff \
+  --input encrypted.gcm --output decrypted.txt \
+  --aad $AAD_HEX
+
+# 5. Проверка
+echo -e "\n4. Проверка целостности..."
+if diff test_input.txt decrypted.txt > /dev/null; then
+    echo "✅ GCM работает корректно"
+else
+    echo "❌ Ошибка: файлы отличаются"
+fi
+
+# 6. Проверка ошибок аутентификации
+echo -e "\n5. Тест ошибок аутентификации..."
+WRONG_AAD="00000000000000000000000000000000"
+python cryptocore.py encrypt --algorithm aes --mode gcm --decrypt \
+  --key 00112233445566778899aabbccddeeff \
+  --input encrypted.gcm --output should_fail.txt \
+  --aad $WRONG_AAD 2>/dev/null || echo "✅ Аутентификация провалена (ожидаемо)"
+
+# 7. Очистка
+echo -e "\n6. Очистка..."
+rm -f test_input.txt aad_content.txt encrypted.gcm decrypted.txt should_fail.txt 2>/dev/null
+echo "✅ Тестирование завершено"
+```
+

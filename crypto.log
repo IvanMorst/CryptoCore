@@ -128,3 +128,199 @@
 2025-10-26 18:47:54,661 - INFO - Processing decryption (cbc): document.pdf.cbc.enc -> document_decrypted.pdf (size: 3360960 bytes)
 2025-10-26 18:47:55,951 - INFO - Decryption: 3360944 -> 3360938 bytes (mode: cbc, iv: 00b073c17f8de6a5fb0906753d82ed9a)
 2025-10-26 18:47:55,951 - INFO - Decryption completed: 20.86 Mbps, 1.29 seconds
+2025-12-19 12:35:40,612 - root - INFO - ============================================================
+2025-12-19 12:35:40,612 - root - INFO - CryptoCore System Started
+2025-12-19 12:35:40,612 - root - INFO - Timestamp: 2025-12-19 12:35:40.612578
+2025-12-19 12:35:40,612 - root - INFO - ============================================================
+2025-12-19 12:35:40,612 - root - INFO - Key info: {'length': 16, 'hex': '30303030303030303030303030303030', 'algorithm': 'AES', 'key_size': 128, 'mode': 'CBC', 'iv_used': True, 'iv': 'ef1850058faf6ba743d05454a3b907c2'}
+2025-12-19 12:35:40,612 - root - INFO - KEY GENERATION:
+  length: 16
+  hex: 30303030303030303030303030303030
+  algorithm: AES
+  key_size: 128
+  mode: CBC
+  iv_used: True
+  iv: ef1850058faf6ba743d05454a3b907c2
+
+2025-12-19 12:35:40,612 - root - INFO - CipherCore initialized: mode=cbc, key_size=128 bits
+2025-12-19 12:35:40,612 - root - INFO - Starting encryption: mode=cbc, data_size=9 bytes, key=3030303030303030...
+2025-12-19 12:35:40,613 - root - INFO - CBC encryption started, IV=ef1850058faf6ba743d05454a3b907c2
+2025-12-19 12:35:40,613 - root - INFO - CBC encryption: IV=ef1850058faf6ba743d05454a3b907c2, padding=7 bytes
+2025-12-19 12:35:40,613 - root - INFO - Encryption (cbc): 9 bytes processed in 0.00s (0.07 Mbps, 0.01 MB/s)
+2025-12-19 12:35:40,614 - root - INFO - Encryption completed: 9 -> 32 bytes (overhead: 23 bytes)
+2025-12-19 12:35:40,614 - root - INFO - Starting decryption: mode=cbc, data_size=32 bytes, key=3030303030303030...
+2025-12-19 12:35:40,614 - root - INFO - CBC decryption started
+2025-12-19 12:35:40,614 - root - INFO - CBC decryption: extracted IV=ef1850058faf6ba743d05454a3b907c2
+2025-12-19 12:35:40,614 - root - INFO - CBC decryption: padding removed=7 bytes
+2025-12-19 12:35:40,614 - root - INFO - Decryption (cbc): 32 bytes processed in 0.00s (0.81 Mbps, 0.10 MB/s)
+2025-12-19 12:35:40,614 - root - INFO - Decryption completed: 32 -> 9 bytes
+2025-12-19 12:35:58,655 - root - INFO - ============================================================
+2025-12-19 12:35:58,655 - root - INFO - CryptoCore System Started
+2025-12-19 12:35:58,655 - root - INFO - Timestamp: 2025-12-19 12:35:58.655611
+2025-12-19 12:35:58,655 - root - INFO - ============================================================
+2025-12-19 12:35:58,655 - root - INFO - CryptoCore CLI started
+2025-12-19 12:35:58,658 - root - INFO - CLI arguments: {'algorithm': 'aes', 'mode': 'gcm', 'encrypt': True, 'decrypt': False, 'key': '00112233445566778899aabbccddeeff', 'input': 'test_input.txt', 'output': 'encrypted.gcm', 'aad': 'd090d183d182d0b5d0bdd182d0b8d184d0b8d0bad0b0d186d0b8d0bed0bdd0bdd18bd0b520d0b4d0b0d0bdd0bdd18bd0b50a', 'nonce': None, 'command': 'encrypt'}
+2025-12-19 12:35:58,660 - root - INFO - CLI operation completed successfully
+2025-12-19 12:35:58,775 - root - INFO - ============================================================
+2025-12-19 12:35:58,775 - root - INFO - CryptoCore System Started
+2025-12-19 12:35:58,775 - root - INFO - Timestamp: 2025-12-19 12:35:58.775584
+2025-12-19 12:35:58,775 - root - INFO - ============================================================
+2025-12-19 12:35:58,775 - root - INFO - CryptoCore CLI started
+2025-12-19 12:35:58,779 - root - INFO - CLI arguments: {'algorithm': 'aes', 'mode': 'gcm', 'encrypt': False, 'decrypt': True, 'key': '00112233445566778899aabbccddeeff', 'input': 'encrypted.gcm', 'output': 'decrypted.txt', 'aad': 'd090d183d182d0b5d0bdd182d0b8d184d0b8d0bad0b0d186d0b8d0bed0bdd0bdd18bd0b520d0b4d0b0d0bdd0bdd18bd0b50a', 'nonce': None, 'command': 'encrypt'}
+2025-12-19 12:35:58,781 - root - INFO - CLI operation completed successfully
+2025-12-19 12:35:58,902 - root - INFO - ============================================================
+2025-12-19 12:35:58,902 - root - INFO - CryptoCore System Started
+2025-12-19 12:35:58,902 - root - INFO - Timestamp: 2025-12-19 12:35:58.902955
+2025-12-19 12:35:58,903 - root - INFO - ============================================================
+2025-12-19 12:35:58,903 - root - INFO - CryptoCore CLI started
+2025-12-19 12:35:58,905 - root - INFO - CLI arguments: {'algorithm': 'aes', 'mode': 'gcm', 'encrypt': False, 'decrypt': True, 'key': '00112233445566778899aabbccddeeff', 'input': 'encrypted.gcm', 'output': 'should_fail.txt', 'aad': '00000000000000000000000000000000', 'nonce': None, 'command': 'encrypt'}
+2025-12-19 12:35:58,906 - root - ERROR - CLI operation failed
+2025-12-19 12:36:15,335 - root - INFO - ============================================================
+2025-12-19 12:36:15,335 - root - INFO - CryptoCore System Started
+2025-12-19 12:36:15,335 - root - INFO - Timestamp: 2025-12-19 12:36:15.335548
+2025-12-19 12:36:15,335 - root - INFO - ============================================================
+2025-12-19 12:36:15,335 - root - INFO - Key info: {'length': 16, 'hex': '38091249433b8dfd185c2f87d23f84c0', 'algorithm': 'AES', 'key_size': 128, 'mode': 'CTR', 'iv_used': True, 'iv': '9265de4cd1d37c62500d0a04c66f28ae'}
+2025-12-19 12:36:15,335 - root - INFO - KEY GENERATION:
+  length: 16
+  hex: 38091249433b8dfd185c2f87d23f84c0
+  algorithm: AES
+  key_size: 128
+  mode: CTR
+  iv_used: True
+  iv: 9265de4cd1d37c62500d0a04c66f28ae
+
+2025-12-19 12:36:15,336 - root - INFO - CipherCore initialized: mode=ctr, key_size=128 bits
+2025-12-19 12:36:15,336 - root - INFO - Starting encryption: mode=ctr, data_size=33 bytes, key=38091249433b8dfd...
+2025-12-19 12:36:15,336 - root - INFO - CTR encryption started, nonce=9265de4cd1d37c62500d0a04c66f28ae
+2025-12-19 12:36:15,338 - root - INFO - CTR encryption: nonce=9265de4cd1d37c62500d0a04c66f28ae
+2025-12-19 12:36:15,338 - root - INFO - Encryption (ctr): 33 bytes processed in 0.00s (0.12 Mbps, 0.01 MB/s)
+2025-12-19 12:36:15,338 - root - INFO - Encryption completed: 33 -> 49 bytes (overhead: 16 bytes)
+2025-12-19 12:36:15,341 - root - INFO - Starting decryption: mode=ctr, data_size=49 bytes, key=38091249433b8dfd...
+2025-12-19 12:36:15,341 - root - INFO - CTR decryption started
+2025-12-19 12:36:15,341 - root - INFO - CTR decryption: extracted nonce=9265de4cd1d37c62500d0a04c66f28ae
+2025-12-19 12:36:15,342 - root - INFO - CTR decryption completed
+2025-12-19 12:36:15,342 - root - INFO - Decryption (ctr): 49 bytes processed in 0.00s (0.99 Mbps, 0.12 MB/s)
+2025-12-19 12:36:15,342 - root - INFO - Decryption completed: 49 -> 33 bytes
+2025-12-19 12:36:15,342 - root - INFO - Key info: {'length': 16, 'hex': '317f45afb0d2a318d91e8a56ac4537f8', 'algorithm': 'AES', 'key_size': 128, 'mode': 'CTR', 'iv_used': True, 'iv': 'f361c0cb47b4d03c3524a5ebfa4963be'}
+2025-12-19 12:36:15,342 - root - INFO - KEY GENERATION:
+  length: 16
+  hex: 317f45afb0d2a318d91e8a56ac4537f8
+  algorithm: AES
+  key_size: 128
+  mode: CTR
+  iv_used: True
+  iv: f361c0cb47b4d03c3524a5ebfa4963be
+
+2025-12-19 12:36:15,342 - root - INFO - CipherCore initialized: mode=ctr, key_size=128 bits
+2025-12-19 12:36:15,342 - root - INFO - Starting encryption: mode=ctr, data_size=34 bytes, key=317f45afb0d2a318...
+2025-12-19 12:36:15,342 - root - INFO - CTR encryption started, nonce=f361c0cb47b4d03c3524a5ebfa4963be
+2025-12-19 12:36:15,342 - root - INFO - CTR encryption: nonce=f361c0cb47b4d03c3524a5ebfa4963be
+2025-12-19 12:36:15,343 - root - INFO - Encryption (ctr): 34 bytes processed in 0.00s (1.02 Mbps, 0.13 MB/s)
+2025-12-19 12:36:15,343 - root - INFO - Encryption completed: 34 -> 50 bytes (overhead: 16 bytes)
+2025-12-19 12:36:40,735 - root - INFO - ============================================================
+2025-12-19 12:36:40,735 - root - INFO - CryptoCore System Started
+2025-12-19 12:36:40,735 - root - INFO - Timestamp: 2025-12-19 12:36:40.735594
+2025-12-19 12:36:40,735 - root - INFO - ============================================================
+2025-12-19 12:36:40,735 - root - INFO - CryptoCore CLI started
+2025-12-19 12:36:40,738 - root - INFO - CLI arguments: {'algorithm': 'aes', 'mode': 'gcm', 'encrypt': False, 'decrypt': True, 'key': '00112233445566778899aabbccddeeff', 'input': 'ciphertext.bin', 'output': 'decrypted.txt', 'aad': 'aabbccddeeff', 'nonce': None, 'command': 'encrypt'}
+2025-12-19 12:36:40,739 - root - INFO - CLI operation completed successfully
+2025-12-19 12:36:57,044 - root - INFO - ============================================================
+2025-12-19 12:36:57,044 - root - INFO - CryptoCore System Started
+2025-12-19 12:36:57,051 - root - INFO - Timestamp: 2025-12-19 12:36:57.051819
+2025-12-19 12:36:57,051 - root - INFO - ============================================================
+2025-12-19 12:36:57,052 - root - INFO - CryptoCore CLI started
+2025-12-19 12:36:57,054 - root - INFO - CLI arguments: {'algorithm': 'aes', 'mode': 'gcm', 'encrypt': True, 'decrypt': False, 'key': '00112233445566778899aabbccddeeff', 'input': 'plaintext.txt', 'output': 'ciphertext.bin', 'aad': 'aabbccddeeff', 'nonce': None, 'command': 'encrypt'}
+2025-12-19 12:36:57,056 - root - INFO - CLI operation completed successfully
+2025-12-19 12:37:14,135 - root - INFO - ============================================================
+2025-12-19 12:37:14,136 - root - INFO - CryptoCore System Started
+2025-12-19 12:37:14,136 - root - INFO - Timestamp: 2025-12-19 12:37:14.136101
+2025-12-19 12:37:14,136 - root - INFO - ============================================================
+2025-12-19 12:37:14,136 - root - INFO - CryptoCore CLI started
+2025-12-19 12:37:14,138 - root - INFO - CLI arguments: {'algorithm': 'sha256', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': '746573745f6b65795f31323334353637383930616263646566', 'input': 'doc1.tmp', 'output': None, 'aad': None, 'nonce': None, 'command': 'dgst', 'hmac': True, 'verify': None}
+2025-12-19 12:37:14,140 - root - INFO - CLI operation completed successfully
+2025-12-19 12:37:14,255 - root - INFO - ============================================================
+2025-12-19 12:37:14,255 - root - INFO - CryptoCore System Started
+2025-12-19 12:37:14,255 - root - INFO - Timestamp: 2025-12-19 12:37:14.255806
+2025-12-19 12:37:14,255 - root - INFO - ============================================================
+2025-12-19 12:37:14,256 - root - INFO - CryptoCore CLI started
+2025-12-19 12:37:14,260 - root - INFO - CLI arguments: {'algorithm': 'sha256', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': '746573745f6b65795f31323334353637383930616263646566', 'input': 'doc2.tmp', 'output': None, 'aad': None, 'nonce': None, 'command': 'dgst', 'hmac': True, 'verify': None}
+2025-12-19 12:37:14,263 - root - INFO - CLI operation completed successfully
+2025-12-19 12:37:14,400 - root - INFO - ============================================================
+2025-12-19 12:37:14,400 - root - INFO - CryptoCore System Started
+2025-12-19 12:37:14,400 - root - INFO - Timestamp: 2025-12-19 12:37:14.400717
+2025-12-19 12:37:14,400 - root - INFO - ============================================================
+2025-12-19 12:37:14,400 - root - INFO - CryptoCore CLI started
+2025-12-19 12:37:14,403 - root - INFO - CLI arguments: {'algorithm': 'sha256', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': '746573745f6b65795f31323334353637383930616263646566', 'input': 'binary.tmp', 'output': None, 'aad': None, 'nonce': None, 'command': 'dgst', 'hmac': True, 'verify': None}
+2025-12-19 12:37:14,409 - root - INFO - CLI operation completed successfully
+2025-12-19 12:37:14,535 - root - INFO - ============================================================
+2025-12-19 12:37:14,535 - root - INFO - CryptoCore System Started
+2025-12-19 12:37:14,535 - root - INFO - Timestamp: 2025-12-19 12:37:14.535977
+2025-12-19 12:37:14,536 - root - INFO - ============================================================
+2025-12-19 12:37:14,536 - root - INFO - CryptoCore CLI started
+2025-12-19 12:37:14,538 - root - INFO - CLI arguments: {'algorithm': 'sha256', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': '746573745f6b65795f31323334353637383930616263646566', 'input': 'doc1.tmp', 'output': None, 'aad': None, 'nonce': None, 'command': 'dgst', 'hmac': True, 'verify': 'doc1.hmac'}
+2025-12-19 12:37:14,540 - root - INFO - CLI operation completed successfully
+2025-12-19 12:37:14,708 - root - INFO - ============================================================
+2025-12-19 12:37:14,709 - root - INFO - CryptoCore System Started
+2025-12-19 12:37:14,709 - root - INFO - Timestamp: 2025-12-19 12:37:14.709629
+2025-12-19 12:37:14,710 - root - INFO - ============================================================
+2025-12-19 12:37:14,710 - root - INFO - CryptoCore CLI started
+2025-12-19 12:37:14,715 - root - INFO - CLI arguments: {'algorithm': 'sha256', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': '746573745f6b65795f31323334353637383930616263646566', 'input': 'doc2.tmp', 'output': None, 'aad': None, 'nonce': None, 'command': 'dgst', 'hmac': True, 'verify': 'doc2.hmac'}
+2025-12-19 12:37:14,718 - root - INFO - CLI operation completed successfully
+2025-12-19 12:37:14,871 - root - INFO - ============================================================
+2025-12-19 12:37:14,871 - root - INFO - CryptoCore System Started
+2025-12-19 12:37:14,871 - root - INFO - Timestamp: 2025-12-19 12:37:14.871895
+2025-12-19 12:37:14,871 - root - INFO - ============================================================
+2025-12-19 12:37:14,872 - root - INFO - CryptoCore CLI started
+2025-12-19 12:37:14,875 - root - INFO - CLI arguments: {'algorithm': 'sha256', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': '746573745f6b65795f31323334353637383930616263646566', 'input': 'binary.tmp', 'output': None, 'aad': None, 'nonce': None, 'command': 'dgst', 'hmac': True, 'verify': 'binary.hmac'}
+2025-12-19 12:37:14,882 - root - INFO - CLI operation completed successfully
+2025-12-19 12:37:15,014 - root - INFO - ============================================================
+2025-12-19 12:37:15,015 - root - INFO - CryptoCore System Started
+2025-12-19 12:37:15,015 - root - INFO - Timestamp: 2025-12-19 12:37:15.015163
+2025-12-19 12:37:15,015 - root - INFO - ============================================================
+2025-12-19 12:37:15,015 - root - INFO - CryptoCore CLI started
+2025-12-19 12:37:15,018 - root - INFO - CLI arguments: {'algorithm': 'sha256', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': '746573745f6b65795f31323334353637383930616263646566', 'input': 'doc1.tmp', 'output': None, 'aad': None, 'nonce': None, 'command': 'dgst', 'hmac': True, 'verify': 'doc1.hmac'}
+2025-12-19 12:37:15,020 - root - ERROR - CLI operation failed
+2025-12-19 12:37:47,180 - root - INFO - ============================================================
+2025-12-19 12:37:47,180 - root - INFO - CryptoCore System Started
+2025-12-19 12:37:47,180 - root - INFO - Timestamp: 2025-12-19 12:37:47.180797
+2025-12-19 12:37:47,180 - root - INFO - ============================================================
+2025-12-19 12:37:47,180 - root - INFO - CryptoCore CLI started
+2025-12-19 12:37:47,183 - root - INFO - CLI arguments: {'algorithm': 'sha256', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': 'plaintext.txt', 'output': None, 'aad': None, 'nonce': None, 'command': 'dgst', 'hmac': False, 'verify': None}
+2025-12-19 12:37:47,184 - root - INFO - CLI operation completed successfully
+2025-12-19 12:38:11,413 - root - INFO - ============================================================
+2025-12-19 12:38:11,413 - root - INFO - CryptoCore System Started
+2025-12-19 12:38:11,413 - root - INFO - Timestamp: 2025-12-19 12:38:11.413397
+2025-12-19 12:38:11,413 - root - INFO - ============================================================
+2025-12-19 12:38:11,413 - root - INFO - CryptoCore CLI started
+2025-12-19 12:38:11,416 - root - INFO - CLI arguments: {'algorithm': 'aes', 'mode': 'cbc', 'encrypt': True, 'decrypt': False, 'key': '00112233445566778899aabbccddeeff', 'input': 'document.pdf', 'output': 'document.pdf.cbc.enc', 'aad': None, 'nonce': None, 'command': None}
+2025-12-19 12:38:11,416 - root - ERROR - CLI operation failed
+2025-12-19 12:38:50,940 - root - INFO - ============================================================
+2025-12-19 12:38:50,940 - root - INFO - CryptoCore System Started
+2025-12-19 12:38:50,940 - root - INFO - Timestamp: 2025-12-19 12:38:50.940905
+2025-12-19 12:38:50,940 - root - INFO - ============================================================
+2025-12-19 12:38:50,941 - root - INFO - CryptoCore CLI started
+2025-12-19 12:38:50,943 - root - INFO - CLI arguments: {'algorithm': 'aes', 'mode': 'cbc', 'encrypt': True, 'decrypt': False, 'key': '000102030405060708090a0b0c0d0e0f', 'input': 'plaintext.bin', 'output': 'cryptocore_cipher.bin', 'aad': None, 'nonce': None, 'command': None}
+2025-12-19 12:38:50,943 - root - ERROR - CLI operation failed
+2025-12-19 12:45:20,864 - root - INFO - ============================================================
+2025-12-19 12:45:20,865 - root - INFO - CryptoCore System Started
+2025-12-19 12:45:20,865 - root - INFO - Timestamp: 2025-12-19 12:45:20.865229
+2025-12-19 12:45:20,865 - root - INFO - ============================================================
+2025-12-19 12:45:20,865 - root - INFO - CryptoCore CLI started
+2025-12-19 12:45:20,868 - root - INFO - CLI arguments: {'algorithm': 'aes', 'mode': 'ctr', 'encrypt': True, 'decrypt': False, 'key': '00112233445566778899aabbccddeeff', 'input': 'plaintext.txt', 'output': 'archive.zip.ctr.enc', 'aad': None, 'nonce': None, 'command': None}
+2025-12-19 12:45:20,868 - root - INFO - Key info: {'length': 16, 'hex': '00112233445566778899aabbccddeeff', 'algorithm': 'AES', 'key_size': 128, 'mode': 'CTR', 'iv_used': True, 'iv': '8916b4518dd3a786b094bb1b1be04174'}
+2025-12-19 12:45:20,868 - root - INFO - KEY GENERATION:
+  length: 16
+  hex: 00112233445566778899aabbccddeeff
+  algorithm: AES
+  key_size: 128
+  mode: CTR
+  iv_used: True
+  iv: 8916b4518dd3a786b094bb1b1be04174
+
+2025-12-19 12:45:20,868 - root - INFO - CipherCore initialized: mode=ctr, key_size=128 bits
+2025-12-19 12:45:20,868 - root - INFO - Starting encryption: mode=ctr, data_size=5 bytes, key=0011223344556677...
+2025-12-19 12:45:20,868 - root - INFO - CTR encryption started, nonce=8916b4518dd3a786b094bb1b1be04174
+2025-12-19 12:45:20,870 - root - INFO - CTR encryption: nonce=8916b4518dd3a786b094bb1b1be04174
+2025-12-19 12:45:20,870 - root - INFO - Encryption (ctr): 5 bytes processed in 0.00s (0.02 Mbps, 0.00 MB/s)
+2025-12-19 12:45:20,870 - root - INFO - Encryption completed: 5 -> 21 bytes (overhead: 16 bytes)
+2025-12-19 12:45:20,870 - root - INFO - CLI operation completed successfully

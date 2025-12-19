@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
 CryptoCore CLI Tool
-Командный интерфейс для криптографической системы
+Командный интерфейс для криптографической системы с поддержкой AEAD (GCM)
 """
 
 import argparse
 import sys
 import os
+import tempfile
 from pathlib import Path
 
 # Добавляем путь для импорта модулей
@@ -18,26 +19,27 @@ from crypto.crypto_exception import CryptoException
 from csprng import CSPRNG
 from hash.sha256 import sha256_file
 from hash.sha3_256 import sha3_256_file
-from mac.hmac import hmac_sha256_file, verify_hmac_file  # 🆕 Импорт HMAC функций
+from mac.hmac import hmac_sha256_file, verify_hmac_file
+from crypto.aead.gcm import GCM, AuthenticationError  # 🆕 Импорт GCM
 
 
 class CryptoCoreCLI:
-    """Класс для обработки командной строки CryptoCore"""
+    """Класс для обработки командной строки CryptoCore с поддержкой AEAD"""
 
     @staticmethod
     def create_parser():
-        """Создание парсера аргументов"""
+        """Создание парсера аргументов с поддержкой GCM"""
         parser = argparse.ArgumentParser(
-            description='CryptoCore - Cryptographic File Encryption/Decryption, Hashing, and HMAC Tool',
+            description='CryptoCore - Cryptographic File Operations with AEAD Support',
             epilog='Examples:\n'
                    '  # Hash computation:\n'
                    '  cryptocore dgst --algorithm sha256 --input document.pdf\n\n'
                    '  # HMAC generation:\n'
                    '  cryptocore dgst --algorithm sha256 --hmac --key 00112233445566778899aabbccddeeff --input message.txt\n\n'
-                   '  # HMAC verification:\n'
-                   '  cryptocore dgst --algorithm sha256 --hmac --key 00112233445566778899aabbccddeeff --input message.txt --verify expected_hmac.txt\n\n'
-                   '  # Encryption (old syntax):\n'
-                   '  cryptocore --algorithm aes --mode ctr --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output ciphertext.bin',
+                   '  # GCM encryption with AAD:\n'
+                   '  cryptocore encrypt --algorithm aes --mode gcm --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output ciphertext.bin --aad aabbccddeeff\n\n'
+                   '  # GCM decryption with AAD:\n'
+                   '  cryptocore encrypt --algorithm aes --mode gcm --decrypt --key 00112233445566778899aabbccddeeff --input ciphertext.bin --output plaintext.txt --aad aabbccddeeff',
             formatter_class=argparse.RawDescriptionHelpFormatter
         )
 
@@ -49,7 +51,7 @@ class CryptoCoreCLI:
 
         parser.add_argument(
             '--mode',
-            help='Encryption mode (ecb, cbc, ctr, cfb, ofb) - for backward compatibility'
+            help='Encryption mode (ecb, cbc, ctr, cfb, ofb, gcm) - for backward compatibility'
         )
 
         operation_group = parser.add_mutually_exclusive_group()
@@ -79,6 +81,20 @@ class CryptoCoreCLI:
         parser.add_argument(
             '--output',
             help='Path to output file (default: generated based on operation)'
+        )
+
+        # 🆕 AAD for GCM
+        parser.add_argument(
+            '--aad',
+            help='Additional Authenticated Data (AAD) as hexadecimal string for GCM mode'
+        )
+
+        # 🆕 Nonce/IV for GCM (renamed for consistency but keeping iv for backward compatibility)
+        parser.add_argument(
+            '--iv',
+            '--nonce',
+            dest='nonce',
+            help='Nonce/Initialization Vector as hexadecimal string (12 bytes for GCM)'
         )
 
         # New syntax subparsers
@@ -121,7 +137,7 @@ class CryptoCoreCLI:
             help='Optional: verify against existing hash/HMAC file'
         )
 
-        # Subcommand for encryption/decryption (new syntax)
+        # 🆕 Subcommand for encryption/decryption (new syntax) с поддержкой GCM
         encrypt_parser = subparsers.add_parser('encrypt', help='Encryption/decryption operations (new syntax)')
 
         encrypt_parser.add_argument(
@@ -134,8 +150,8 @@ class CryptoCoreCLI:
         encrypt_parser.add_argument(
             '--mode',
             required=True,
-            choices=['ecb', 'cbc', 'ctr', 'cfb', 'ofb'],
-            help='Encryption mode (ecb, cbc, ctr, cfb, ofb)'
+            choices=['ecb', 'cbc', 'ctr', 'cfb', 'ofb', 'gcm'],  # 🆕 Добавлен GCM
+            help='Encryption mode (ecb, cbc, ctr, cfb, ofb, gcm)'
         )
 
         encrypt_op_group = encrypt_parser.add_mutually_exclusive_group(required=True)
@@ -168,6 +184,19 @@ class CryptoCoreCLI:
             help='Path to output file (default: generated based on operation)'
         )
 
+        # 🆕 GCM-specific arguments
+        encrypt_parser.add_argument(
+            '--aad',
+            help='Additional Authenticated Data (AAD) as hexadecimal string (for GCM mode only)'
+        )
+
+        encrypt_parser.add_argument(
+            '--nonce',
+            '--iv',
+            dest='nonce',
+            help='Nonce/Initialization Vector as hexadecimal string (12 bytes for GCM)'
+        )
+
         return parser
 
     @staticmethod
@@ -180,18 +209,19 @@ class CryptoCoreCLI:
     def is_legacy_syntax(args):
         """Проверяем, используется ли старый синтаксис шифрования"""
         return (args.algorithm == 'aes' or
-                (args.mode and args.mode in ['ecb', 'cbc', 'ctr', 'cfb', 'ofb']) or
+                (args.mode and args.mode in ['ecb', 'cbc', 'ctr', 'cfb', 'ofb', 'gcm']) or
                 args.encrypt or
                 args.decrypt)
 
     @staticmethod
-    def validate_hex_key(key_str: str, for_hmac: bool = False) -> bytes:
+    def validate_hex_key(key_str: str, for_hmac: bool = False, min_length: int = None) -> bytes:
         """
         Валидация и преобразование hex-ключа в байты
 
         Args:
             key_str: Key as hex string
             for_hmac: True if key is for HMAC (arbitrary length allowed)
+            min_length: Minimum length in bytes (for GCM nonce)
 
         Returns:
             bytes: Key as bytes
@@ -212,7 +242,10 @@ class CryptoCoreCLI:
         # Для HMAC: произвольная длина
         if for_hmac:
             try:
-                return bytes.fromhex(key_str)
+                key_bytes = bytes.fromhex(key_str)
+                if min_length and len(key_bytes) < min_length:
+                    raise ValueError(f"Key must be at least {min_length} bytes for GCM mode")
+                return key_bytes
             except ValueError as e:
                 raise ValueError(f"Invalid hex key: {e}")
 
@@ -249,7 +282,10 @@ class CryptoCoreCLI:
         input_path = Path(input_path)
 
         if encrypt:
-            return str(input_path.with_suffix(input_path.suffix + '.enc'))
+            if input_path.suffix == '.dec':
+                return str(input_path.with_suffix(''))
+            else:
+                return str(input_path.with_suffix(input_path.suffix + '.enc'))
         else:
             if input_path.suffix == '.enc':
                 return str(input_path.with_suffix(input_path.suffix + '.dec'))
@@ -368,9 +404,25 @@ class CryptoCoreCLI:
     @staticmethod
     def process_crypto_operation(args, mode='ecb'):
         """
-        Обработка криптографической операции
+        Обработка криптографической операции с поддержкой AEAD
         """
         try:
+            # 🆕 Обработка AAD для GCM
+            aad_bytes = b""
+            if hasattr(args, 'aad') and args.aad:
+                aad_bytes = CryptoCoreCLI.validate_hex_key(args.aad, for_hmac=True)
+                if args.mode != 'gcm':
+                    print(f"Warning: --aad is only used with GCM mode, ignoring for {args.mode} mode",
+                          file=sys.stderr)
+
+            # 🆕 Обработка nonce/IV
+            nonce_bytes = None
+            if hasattr(args, 'nonce') and args.nonce:
+                nonce_bytes = CryptoCoreCLI.validate_hex_key(args.nonce, for_hmac=True)
+                if args.mode == 'gcm' and len(nonce_bytes) != 12:
+                    print(f"Warning: GCM typically uses 12-byte nonce, got {len(nonce_bytes)} bytes",
+                          file=sys.stderr)
+
             # Обработка ключа
             key_bytes = None
             key_was_generated = False
@@ -412,21 +464,44 @@ class CryptoCoreCLI:
 
             # Выполнение операции
             if args.encrypt:
-                CryptoCoreCLI.encrypt_file(args.input, output_path, key_bytes, crypto_mode)
+                CryptoCoreCLI.encrypt_file(args.input, output_path, key_bytes,
+                                          crypto_mode, aad_bytes, nonce_bytes)
             else:
-                CryptoCoreCLI.decrypt_file(args.input, output_path, key_bytes, crypto_mode)
+                CryptoCoreCLI.decrypt_file(args.input, output_path, key_bytes,
+                                          crypto_mode, aad_bytes, nonce_bytes)
 
             return True
 
+        except AuthenticationError as e:
+            print(f"[ERROR] Authentication failed: {e}", file=sys.stderr)
+            # Удалить частично созданный файл
+            if 'output_path' in locals() and output_path and os.path.exists(output_path):
+                os.remove(output_path)
+            return False
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
             return False
 
     @staticmethod
-    def encrypt_file(input_path: str, output_path: str, key: bytes, mode: str):
+    def encrypt_file(input_path: str, output_path: str, key: bytes, mode: str,
+                    aad: bytes = b"", nonce: bytes = None):
         """
-        Шифрование файла
+        Шифрование файла с поддержкой GCM
+
+        Args:
+            input_path: Path to input file
+            output_path: Path to output file
+            key: Encryption key
+            mode: Encryption mode
+            aad: Additional Authenticated Data (for GCM)
+            nonce: Nonce/IV (optional, generated if None)
         """
+        # 🆕 Специальная обработка для GCM
+        if mode == 'gcm':
+            CryptoCoreCLI.encrypt_file_gcm(input_path, output_path, key, aad, nonce)
+            return
+
+        # Стандартное шифрование для других режимов
         from crypto.cipher_core import CipherCore
 
         # Создаем cipher core с предоставленным ключом и режимом
@@ -446,14 +521,31 @@ class CryptoCoreCLI:
         print(f"Encryption successful: {input_path} -> {output_path}")
         print(f"Mode: {mode.upper()}")
         print(f"Key: {key.hex()}")
+        if aad:
+            print(f"AAD (ignored for {mode}): {aad.hex()}")
         print(f"Original size: {len(plaintext)} bytes")
         print(f"Encrypted size: {len(encrypted)} bytes")
 
     @staticmethod
-    def decrypt_file(input_path: str, output_path: str, key: bytes, mode: str):
+    def decrypt_file(input_path: str, output_path: str, key: bytes, mode: str,
+                    aad: bytes = b"", nonce: bytes = None):
         """
-        Дешифрование файла
+        Дешифрование файла с поддержкой GCM
+
+        Args:
+            input_path: Path to input file
+            output_path: Path to output file
+            key: Encryption key
+            mode: Encryption mode
+            aad: Additional Authenticated Data (for GCM)
+            nonce: Nonce/IV (optional, read from file if None)
         """
+        # 🆕 Специальная обработка для GCM
+        if mode == 'gcm':
+            CryptoCoreCLI.decrypt_file_gcm(input_path, output_path, key, aad, nonce)
+            return
+
+        # Стандартное дешифрование для других режимов
         from crypto.cipher_core import CipherCore
 
         # Создаем cipher core с предоставленным ключом и режимом
@@ -473,9 +565,110 @@ class CryptoCoreCLI:
         print(f"Decryption successful: {input_path} -> {output_path}")
         print(f"Mode: {mode.upper()}")
         print(f"Key: {key.hex()}")
+        if aad:
+            print(f"AAD (ignored for {mode}): {aad.hex()}")
         print(f"Encrypted size: {len(ciphertext)} bytes")
         print(f"Decrypted size: {len(decrypted)} bytes")
 
+    @staticmethod
+    def encrypt_file_gcm(input_path: str, output_path: str, key: bytes,
+                        aad: bytes = b"", nonce: bytes = None):
+        """
+        GCM encryption with AAD support
+
+        Args:
+            input_path: Path to input file
+            output_path: Path to output file
+            key: Encryption key (16, 24, or 32 bytes)
+            aad: Additional Authenticated Data
+            nonce: Nonce (12 bytes, generated if None)
+        """
+        # Validate key length for GCM
+        if len(key) not in [16, 24, 32]:
+            raise ValueError(f"Key must be 16, 24, or 32 bytes for GCM. Got {len(key)} bytes")
+
+        # Read input file
+        with open(input_path, 'rb') as f:
+            plaintext = f.read()
+
+        # Encrypt with GCM
+        gcm = GCM(key, nonce)
+        encrypted = gcm.encrypt(plaintext, aad)
+
+        # Write output
+        with open(output_path, 'wb') as f:
+            f.write(encrypted)
+
+        print(f"GCM encryption successful: {input_path} -> {output_path}")
+        print(f"Key: {key.hex()}")
+        print(f"Nonce: {gcm.nonce.hex()}")
+        print(f"AAD: {aad.hex() if aad else 'None'}")
+        print(f"Original size: {len(plaintext)} bytes")
+        print(f"Encrypted size: {len(encrypted)} bytes")
+        print(f"Tag size: 16 bytes")
+        print(f"Structure: 12B nonce + {len(encrypted)-28}B ciphertext + 16B tag")
+
+    @staticmethod
+    def decrypt_file_gcm(input_path: str, output_path: str, key: bytes,
+                         aad: bytes = b"", nonce: bytes = None):
+        """
+        GCM decryption with authentication
+
+        Args:
+            input_path: Path to input file
+            output_path: Path to output file
+            key: Encryption key
+            aad: Additional Authenticated Data
+            nonce: Nonce (if provided, uses this instead of reading from file)
+        """
+        # Validate key length for GCM
+        if len(key) not in [16, 24, 32]:
+            raise ValueError(f"Key must be 16, 24, or 32 bytes for GCM. Got {len(key)} bytes")
+
+        try:
+            # Read encrypted file
+            with open(input_path, 'rb') as f:
+                encrypted = f.read()
+
+            # Check minimum length (12B nonce + 0B ciphertext + 16B tag = 28B)
+            if len(encrypted) < 28:
+                raise ValueError(f"GCM file too short: {len(encrypted)} bytes (minimum 28 bytes)")
+
+            if nonce:
+                # Use provided nonce (for testing with NIST vectors)
+                gcm = GCM(key, nonce)
+                decrypted = gcm.decrypt(encrypted, aad)
+                actual_nonce = nonce
+            else:
+                # Nonce is embedded in the file (first 12 bytes)
+                # Extract nonce from file
+                file_nonce = encrypted[:12]
+                gcm = GCM(key, file_nonce)
+                # Decrypt (nonce будет извлечен из данных внутри метода decrypt)
+                decrypted = gcm.decrypt(encrypted, aad)
+                actual_nonce = file_nonce
+
+            # Write output only if authentication succeeded
+            with open(output_path, 'wb') as f:
+                f.write(decrypted)
+
+            print(f"GCM decryption successful: {input_path} -> {output_path}")
+            print(f"Key: {key.hex()}")
+            print(f"Nonce: {actual_nonce.hex()}")
+            print(f"AAD: {aad.hex() if aad else 'None'}")
+            print(f"Encrypted size: {len(encrypted)} bytes")
+            print(f"Decrypted size: {len(decrypted)} bytes")
+
+        except AuthenticationError as e:
+            # Delete output file if it was partially created
+            if os.path.exists(output_path):
+                os.remove(output_path)
+            raise AuthenticationError(f"GCM authentication failed: {e}")
+        except Exception as e:
+            # Clean up on any error
+            if os.path.exists(output_path):
+                os.remove(output_path)
+            raise e
     @staticmethod
     def process_operation(args):
         """
@@ -509,19 +702,41 @@ class CryptoCoreCLI:
 def main():
     """Главная функция CLI"""
     try:
+        # Инициализация логирования в самом начале
+        from crypto.crypto_logger import CryptoLogger
+        CryptoLogger.setup_logging()
+
+        CryptoLogger.log("CryptoCore CLI started")
+
         # Парсинг аргументов
         args = CryptoCoreCLI.parse_arguments()
+
+        # Логирование аргументов
+        CryptoLogger.log(f"CLI arguments: {vars(args)}")
 
         # Обработка операции
         success = CryptoCoreCLI.process_operation(args)
 
+        if success:
+            CryptoLogger.log("CLI operation completed successfully")
+        else:
+            CryptoLogger.log("CLI operation failed", is_error=True)
+
         # Возвращаем код выхода
         sys.exit(0 if success else 1)
 
+    except AuthenticationError as e:
+        error_msg = f"Authentication error: {e}"
+        CryptoLogger.log(error_msg, is_error=True)
+        print(f"[AUTH ERROR] {e}", file=sys.stderr)
+        sys.exit(1)
     except KeyboardInterrupt:
+        CryptoLogger.log("Operation cancelled by user", is_error=True)
         print("\nOperation cancelled by user", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
+        error_msg = f"Fatal error: {e}"
+        CryptoLogger.log(error_msg, is_error=True)
         print(f"Fatal error: {e}", file=sys.stderr)
         sys.exit(1)
 
