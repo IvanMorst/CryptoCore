@@ -324,3 +324,170 @@
 2025-12-19 12:45:20,870 - root - INFO - Encryption (ctr): 5 bytes processed in 0.00s (0.02 Mbps, 0.00 MB/s)
 2025-12-19 12:45:20,870 - root - INFO - Encryption completed: 5 -> 21 bytes (overhead: 16 bytes)
 2025-12-19 12:45:20,870 - root - INFO - CLI operation completed successfully
+2025-12-19 14:03:46,245 - root - INFO - ============================================================
+2025-12-19 14:03:46,245 - root - INFO - CryptoCore System Started
+2025-12-19 14:03:46,245 - root - INFO - Timestamp: 2025-12-19 14:03:46.245521
+2025-12-19 14:03:46,245 - root - INFO - ============================================================
+2025-12-19 14:03:46,245 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 14:03:46,249 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': '1234567890abcdef', 'iterations': 1000, 'length': 32, 'context': None, 'master_key': None}
+2025-12-19 14:03:46,249 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=1000, length=32 bytes
+2025-12-19 14:03:46,249 - root - INFO - Password length: 4 characters
+2025-12-19 14:03:46,249 - root - INFO - Using provided salt: 8 bytes
+2025-12-19 14:03:46,249 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=4, salt_len=8, iterations=1000
+2025-12-19 14:03:47,473 - root - INFO - PBKDF2 key derived successfully: key_length=32 bytes
+2025-12-19 14:03:47,473 - root - INFO - Key derivation completed successfully
+2025-12-19 14:03:47,473 - root - INFO - CLI operation completed successfully
+2025-12-19 14:04:55,206 - root - INFO - ============================================================
+2025-12-19 14:04:55,206 - root - INFO - CryptoCore System Started
+2025-12-19 14:04:55,206 - root - INFO - Timestamp: 2025-12-19 14:04:55.206297
+2025-12-19 14:04:55,206 - root - INFO - ============================================================
+2025-12-19 14:04:55,206 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 14:04:55,209 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': '1234567890abcdef', 'iterations': 1000, 'length': 32, 'context': None, 'master_key': None}
+2025-12-19 14:04:55,209 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=1000, length=32 bytes
+2025-12-19 14:04:55,210 - root - INFO - Password length: 4 characters
+2025-12-19 14:04:55,210 - root - INFO - Using provided salt: 8 bytes
+2025-12-19 14:04:55,210 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=4, salt_len=8, iterations=1000
+2025-12-19 14:04:56,427 - root - INFO - PBKDF2 key derived successfully: key_length=32 bytes
+2025-12-19 14:04:56,427 - root - INFO - Key derivation completed successfully
+2025-12-19 14:04:56,428 - root - INFO - CLI operation completed successfully
+2025-12-19 14:49:55,136 - root - INFO - ============================================================
+2025-12-19 14:49:55,136 - root - INFO - CryptoCore System Started
+2025-12-19 14:49:55,136 - root - INFO - Timestamp: 2025-12-19 14:49:55.136635
+2025-12-19 14:49:55,136 - root - INFO - ============================================================
+2025-12-19 14:49:55,136 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 14:49:55,140 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': '73616c74', 'iterations': 1, 'length': 20, 'context': None, 'master_key': None}
+2025-12-19 14:49:55,140 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=1, length=20 bytes
+2025-12-19 14:49:55,140 - root - INFO - Password length: 8 characters
+2025-12-19 14:49:55,140 - root - INFO - Using provided salt: 4 bytes
+2025-12-19 14:49:55,140 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=8, salt_len=4, iterations=1
+2025-12-19 14:49:55,140 - root - INFO - PBKDF2 key derived successfully: key_length=20 bytes
+2025-12-19 14:49:55,140 - root - INFO - Key derivation completed successfully
+2025-12-19 14:49:55,140 - root - INFO - CLI operation completed successfully
+2025-12-19 16:39:54,667 - root - INFO - ============================================================
+2025-12-19 16:39:54,667 - root - INFO - CryptoCore System Started
+2025-12-19 16:39:54,667 - root - INFO - Timestamp: 2025-12-19 16:39:54.667431
+2025-12-19 16:39:54,667 - root - INFO - ============================================================
+2025-12-19 16:39:54,667 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:39:54,670 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': '1234567890abcdef', 'iterations': 1000, 'length': 32, 'context': None, 'master_key': None}
+2025-12-19 16:39:54,670 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=1000, length=32 bytes
+2025-12-19 16:39:54,670 - root - INFO - Password length: 4 characters
+2025-12-19 16:39:54,670 - root - INFO - Using provided salt: 8 bytes
+2025-12-19 16:39:54,670 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=4, salt_len=8, iterations=1000
+2025-12-19 16:39:56,029 - root - INFO - PBKDF2 key derived successfully: key_length=32 bytes
+2025-12-19 16:39:56,030 - root - INFO - Key derivation completed successfully
+2025-12-19 16:39:56,030 - root - INFO - CLI operation completed successfully
+2025-12-19 16:40:00,090 - root - INFO - ============================================================
+2025-12-19 16:40:00,090 - root - INFO - CryptoCore System Started
+2025-12-19 16:40:00,090 - root - INFO - Timestamp: 2025-12-19 16:40:00.090529
+2025-12-19 16:40:00,090 - root - INFO - ============================================================
+2025-12-19 16:40:00,090 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:40:00,093 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': '1234567890abcdef', 'iterations': 1000, 'length': 32, 'context': None, 'master_key': None}
+2025-12-19 16:40:00,094 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=1000, length=32 bytes
+2025-12-19 16:40:00,094 - root - INFO - Password length: 4 characters
+2025-12-19 16:40:00,094 - root - INFO - Using provided salt: 8 bytes
+2025-12-19 16:40:00,094 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=4, salt_len=8, iterations=1000
+2025-12-19 16:40:01,407 - root - INFO - PBKDF2 key derived successfully: key_length=32 bytes
+2025-12-19 16:40:01,407 - root - INFO - Key derivation completed successfully
+2025-12-19 16:40:01,407 - root - INFO - CLI operation completed successfully
+2025-12-19 16:40:32,605 - root - INFO - ============================================================
+2025-12-19 16:40:32,605 - root - INFO - CryptoCore System Started
+2025-12-19 16:40:32,605 - root - INFO - Timestamp: 2025-12-19 16:40:32.605783
+2025-12-19 16:40:32,605 - root - INFO - ============================================================
+2025-12-19 16:40:32,606 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:40:32,609 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': None, 'iterations': 500000, 'length': 16, 'context': None, 'master_key': None}
+2025-12-19 16:40:32,609 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=500000, length=16 bytes
+2025-12-19 16:40:32,609 - root - INFO - Password length: 15 characters
+2025-12-19 16:40:32,609 - root - INFO - Generated random salt: 16 bytes
+2025-12-19 16:40:32,609 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=15, salt_len=16, iterations=500000
+2025-12-19 16:41:05,879 - root - INFO - ============================================================
+2025-12-19 16:41:05,879 - root - INFO - CryptoCore System Started
+2025-12-19 16:41:05,886 - root - INFO - Timestamp: 2025-12-19 16:41:05.886729
+2025-12-19 16:41:05,886 - root - INFO - ============================================================
+2025-12-19 16:41:05,886 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:41:05,890 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': None, 'iterations': 5000, 'length': 16, 'context': None, 'master_key': None}
+2025-12-19 16:41:05,890 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=5000, length=16 bytes
+2025-12-19 16:41:05,890 - root - INFO - Password length: 15 characters
+2025-12-19 16:41:05,890 - root - INFO - Generated random salt: 16 bytes
+2025-12-19 16:41:05,890 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=15, salt_len=16, iterations=5000
+2025-12-19 16:41:11,738 - root - INFO - PBKDF2 key derived successfully: key_length=16 bytes
+2025-12-19 16:41:11,738 - root - INFO - Key derivation completed successfully
+2025-12-19 16:41:11,738 - root - INFO - CLI operation completed successfully
+2025-12-19 16:42:23,693 - root - INFO - ============================================================
+2025-12-19 16:42:23,693 - root - INFO - CryptoCore System Started
+2025-12-19 16:42:23,693 - root - INFO - Timestamp: 2025-12-19 16:42:23.693884
+2025-12-19 16:42:23,694 - root - INFO - ============================================================
+2025-12-19 16:42:23,694 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:42:23,697 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': 'app_master.key', 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': None, 'iterations': 500000, 'length': 64, 'context': None, 'master_key': None}
+2025-12-19 16:42:23,697 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=500000, length=64 bytes
+2025-12-19 16:42:23,697 - root - INFO - Password length: 43 characters
+2025-12-19 16:42:23,697 - root - INFO - Generated random salt: 16 bytes
+2025-12-19 16:42:23,697 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=43, salt_len=16, iterations=500000
+2025-12-19 16:42:39,933 - root - INFO - ============================================================
+2025-12-19 16:42:39,933 - root - INFO - CryptoCore System Started
+2025-12-19 16:42:39,940 - root - INFO - Timestamp: 2025-12-19 16:42:39.940757
+2025-12-19 16:42:39,940 - root - INFO - ============================================================
+2025-12-19 16:42:39,940 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:42:39,944 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': 'app_master.key', 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': None, 'iterations': 500, 'length': 64, 'context': None, 'master_key': None}
+2025-12-19 16:42:39,944 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=500, length=64 bytes
+2025-12-19 16:42:39,944 - root - INFO - Password length: 43 characters
+2025-12-19 16:42:39,944 - root - INFO - Generated random salt: 16 bytes
+2025-12-19 16:42:39,944 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=43, salt_len=16, iterations=500
+2025-12-19 16:42:41,165 - root - INFO - PBKDF2 key derived successfully: key_length=64 bytes
+2025-12-19 16:42:41,166 - root - INFO - Derived key written to file: app_master.key, size=64 bytes
+2025-12-19 16:42:41,166 - root - INFO - Key SHA-256 (first 16 chars): 02d3b962935c3019
+2025-12-19 16:42:41,166 - root - INFO - Key derivation completed successfully
+2025-12-19 16:42:41,166 - root - INFO - CLI operation completed successfully
+2025-12-19 16:42:53,037 - root - INFO - ============================================================
+2025-12-19 16:42:53,037 - root - INFO - CryptoCore System Started
+2025-12-19 16:42:53,037 - root - INFO - Timestamp: 2025-12-19 16:42:53.037418
+2025-12-19 16:42:53,037 - root - INFO - ============================================================
+2025-12-19 16:42:53,037 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:42:53,040 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': 'app_master.key', 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': None, 'iterations': 500, 'length': 64, 'context': None, 'master_key': None}
+2025-12-19 16:42:53,040 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=500, length=64 bytes
+2025-12-19 16:42:53,040 - root - INFO - Password length: 43 characters
+2025-12-19 16:42:53,041 - root - INFO - Generated random salt: 16 bytes
+2025-12-19 16:42:53,041 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=43, salt_len=16, iterations=500
+2025-12-19 16:42:54,289 - root - INFO - PBKDF2 key derived successfully: key_length=64 bytes
+2025-12-19 16:42:54,289 - root - INFO - Derived key written to file: app_master.key, size=64 bytes
+2025-12-19 16:42:54,289 - root - INFO - Key SHA-256 (first 16 chars): 284defea2c11ca49
+2025-12-19 16:42:54,290 - root - INFO - Key derivation completed successfully
+2025-12-19 16:42:54,290 - root - INFO - CLI operation completed successfully
+2025-12-19 16:43:00,929 - root - INFO - ============================================================
+2025-12-19 16:43:00,929 - root - INFO - CryptoCore System Started
+2025-12-19 16:43:00,929 - root - INFO - Timestamp: 2025-12-19 16:43:00.929798
+2025-12-19 16:43:00,929 - root - INFO - ============================================================
+2025-12-19 16:43:00,929 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:43:00,933 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': '1234567890abcdef', 'iterations': 1000, 'length': 32, 'context': None, 'master_key': None}
+2025-12-19 16:43:00,933 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=1000, length=32 bytes
+2025-12-19 16:43:00,933 - root - INFO - Password length: 4 characters
+2025-12-19 16:43:00,933 - root - INFO - Using provided salt: 8 bytes
+2025-12-19 16:43:00,933 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=4, salt_len=8, iterations=1000
+2025-12-19 16:43:02,628 - root - INFO - PBKDF2 key derived successfully: key_length=32 bytes
+2025-12-19 16:43:02,628 - root - INFO - Key derivation completed successfully
+2025-12-19 16:43:02,628 - root - INFO - CLI operation completed successfully
+2025-12-19 16:45:19,356 - root - INFO - ============================================================
+2025-12-19 16:45:19,356 - root - INFO - CryptoCore System Started
+2025-12-19 16:45:19,356 - root - INFO - Timestamp: 2025-12-19 16:45:19.356553
+2025-12-19 16:45:19,356 - root - INFO - ============================================================
+2025-12-19 16:45:19,356 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:45:19,360 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': 'a1b2c3d4e5f601234567890123456789', 'iterations': 100000, 'length': 32, 'context': None, 'master_key': None}
+2025-12-19 16:45:19,361 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=100000, length=32 bytes
+2025-12-19 16:45:19,361 - root - INFO - Password length: 20 characters
+2025-12-19 16:45:19,361 - root - INFO - Using provided salt: 16 bytes
+2025-12-19 16:45:19,361 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=20, salt_len=16, iterations=100000
+2025-12-19 16:45:46,348 - root - INFO - ============================================================
+2025-12-19 16:45:46,348 - root - INFO - CryptoCore System Started
+2025-12-19 16:45:46,348 - root - INFO - Timestamp: 2025-12-19 16:45:46.348957
+2025-12-19 16:45:46,349 - root - INFO - ============================================================
+2025-12-19 16:45:46,349 - root - INFO - CryptoCore CLI started with KDF support (Sprint 7)
+2025-12-19 16:45:46,355 - root - INFO - CLI arguments: {'algorithm': 'pbkdf2', 'mode': None, 'encrypt': False, 'decrypt': False, 'key': None, 'input': None, 'output': None, 'aad': None, 'nonce': None, 'command': 'derive', 'password': '***', 'salt': 'a1b2c3d4e5f601234567890123456789', 'iterations': 1000, 'length': 32, 'context': None, 'master_key': None}
+2025-12-19 16:45:46,355 - root - INFO - Key derivation started: algorithm=pbkdf2, iterations=1000, length=32 bytes
+2025-12-19 16:45:46,355 - root - INFO - Password length: 20 characters
+2025-12-19 16:45:46,355 - root - INFO - Using provided salt: 16 bytes
+2025-12-19 16:45:46,355 - root - INFO - Starting PBKDF2-HMAC-SHA256 derivation: password_len=20, salt_len=16, iterations=1000
+2025-12-19 16:45:47,633 - root - INFO - PBKDF2 key derived successfully: key_length=32 bytes
+2025-12-19 16:45:47,633 - root - INFO - Key derivation completed successfully
+2025-12-19 16:45:47,633 - root - INFO - CLI operation completed successfully
+2025-12-19 16:47:19,367 - root - INFO - PBKDF2 key derived successfully: key_length=32 bytes
+2025-12-19 16:47:19,367 - root - INFO - Key derivation completed successfully
+2025-12-19 16:47:19,374 - root - INFO - CLI operation completed successfully

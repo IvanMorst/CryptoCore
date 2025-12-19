@@ -45,10 +45,10 @@ class HMAC:
         """
         # Step 1: Keys longer than block size are hashed
         if len(key) > self.BLOCK_SIZE:
-            # IMPORTANT: Use the hash function instance correctly
+            # IMPORTANT FIX: Create hash instance and use update/digest
             hasher = self.hash_func()
             hasher.update(key)
-            key = hasher.digest()  # Get bytes, not hex
+            key = hasher.digest()
 
         # Step 2: Keys shorter than block size are padded with zeros
         if len(key) < self.BLOCK_SIZE:
@@ -155,7 +155,22 @@ class HMAC:
 
 
 # Convenience functions
-def hmac_sha256(key: bytes, message: bytes) -> str:
+def hmac_sha256(key: bytes, message: bytes) -> bytes:
+    """
+    Convenience function for one-shot HMAC-SHA256 computation
+
+    Args:
+        key: HMAC key
+        message: Message to authenticate
+
+    Returns:
+        bytes: HMAC as bytes
+    """
+    hmac = HMAC(key, 'sha256')
+    return hmac.compute(message)
+
+
+def hmac_sha256_hex(key: bytes, message: bytes) -> str:
     """
     Convenience function for one-shot HMAC-SHA256 computation
 
@@ -198,7 +213,7 @@ def verify_hmac(key: bytes, message: bytes, expected_hmac: str) -> bool:
     Returns:
         bool: True if HMAC matches, False otherwise
     """
-    computed = hmac_sha256(key, message)
+    computed = hmac_sha256_hex(key, message)
     return computed == expected_hmac.lower()
 
 

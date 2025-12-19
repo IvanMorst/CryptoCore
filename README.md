@@ -20,6 +20,9 @@ CryptoCore/
 │   ├── test_sha256.py            # Тесты для реализации SHA-256
 │   ├── test_sha3_256.py          # Тесты для реализации SHA3-256
 │   ├── test_hmac.py          # Тесты для реализации HMAC
+│   ├── test_pbkdf2.py            # Тесты для PBKDF2
+│   ├── test_gcm.py           # Тесты для GSM
+│   ├── test_key_hierarchy.py     # Тесты для иерархии ключей
 │   └── test_csprng.py            # Тесты для CSPRNG модуля
 └── crypto/ # Пакет с ядром криптосистемы
     ├── init.py
@@ -30,6 +33,10 @@ CryptoCore/
     ├── file_processor.py # Обработка файлов
     ├── generator.py # Генератор случайных данных
     ├── key_generator.py # Кастомный генератор ключей
+    ├── kdf/                          #  Новый модуль
+    │   ├── __init__.py
+    │   ├── pbkdf2.py                 # Реализация PBKDF2-HMAC-SHA256
+    │   └── key_hierarchy.py          # Функция иерархии ключей
     ├── aead/   # Новый модуль для AEAD
     │    ├── __init__.py
     │    ├── encrypt_then_mac.py  # Encrypt-then-MAC реализация
@@ -667,3 +674,104 @@ rm -f test_input.txt aad_content.txt encrypted.gcm decrypted.txt should_fail.txt
 echo "✅ Тестирование завершено"
 ```
 
+
+
+
+##  Key Derivation Functions (KDF)
+
+### Реализация функций для безопасного вывода ключей из паролей и создания иерархии ключей.
+
+### Новые возможности
+
+#### 1. Команда `derive` для вывода ключей
+
+### Базовый вывод ключа с указанной солью
+```bash
+
+python cryptocore.py derive --password "MySecurePassword123!" \
+  --salt a1b2c3d4e5f601234567890123456789 \
+  --iterations 1000 \
+  --length 32
+```
+
+### Вывод ключа с автоматической генерацией соли
+```bash
+
+python cryptocore.py derive --password "AnotherPassword" \
+  --iterations 5000 \
+  --length 16
+````
+
+### Вывод ключа и сохранение в файл
+```bash
+
+python cryptocore.py derive --password "app_key" \
+  --output derived_key.bin
+  ```
+### Поддерживаемые алгоритмы
+```
+PBKDF2-HMAC-SHA256 - RFC 2898 совместимая реализация
+
+Key Hierarchy Function - детерминированный вывод ключей из мастер-ключа
+```
+### Параметры команды derive
+```
+Параметр	Описание	По умолчанию
+--password	Пароль для вывода ключа	Обязательный
+--salt	Соль в hex-формате	Автогенерация (16 байт)
+--iterations	Количество итераций	100000
+--length	Длина ключа в байтах	32
+--algorithm	Алгоритм KDF	pbkdf2
+--output	Файл для сохранения ключа	Необязательный
+```
+
+### Тестирование
+Тестовые векторы RFC 6070
+
+### Запуск тестов PBKDF2
+```bash
+
+python tests/test_pbkdf2.py
+```
+### Запуск тестов иерархии ключей
+```bash
+python tests/test_key_hierarchy.py
+```
+
+
+### Интероперабельность с OpenSSL
+```bash
+python cryptocore.py derive --password "test" \
+  --salt 1234567890abcdef \
+  --iterations 1000 \
+  --length 32
+```
+
+### Совместимость c OpenSSL
+```bash
+# Сравнение с OpenSSL
+python cryptocore.py derive --password "test" \
+  --salt 1234567890abcdef \
+  --iterations 1000 \
+  --length 32 > my_key.txt
+
+openssl kdf -keylen 32 \
+  -kdfopt pass:test \
+  -kdfopt salt:1234567890abcdef \
+  -kdfopt iter:1000 \
+  PBKDF2 > openssl_key.txt
+
+diff my_key.txt openssl_key.txt
+
+```
+
+### Примеры использования
+Пример 1: Защищенный вывод ключа приложения
+```bash
+# Генерация мастер-ключа приложения
+python cryptocore.py derive \
+  --password "$(cat /etc/machine-id)-$(date +%s)" \
+  --iterations 500 \
+  --length 64 \
+  --output app_master.key
+  ```

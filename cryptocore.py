@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CryptoCore CLI Tool
-Командный интерфейс для криптографической системы с поддержкой AEAD (GCM)
+Командный интерфейс для криптографической системы с поддержкой AEAD (GCM) и KDF (Sprint 7)
 """
 
 import argparse
@@ -9,6 +9,8 @@ import sys
 import os
 import tempfile
 from pathlib import Path
+import struct
+import hashlib
 
 # Добавляем путь для импорта модулей
 sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
@@ -20,17 +22,19 @@ from csprng import CSPRNG
 from hash.sha256 import sha256_file
 from hash.sha3_256 import sha3_256_file
 from mac.hmac import hmac_sha256_file, verify_hmac_file
-from crypto.aead.gcm import GCM, AuthenticationError  # 🆕 Импорт GCM
+from crypto.aead.gcm import GCM, AuthenticationError
+from crypto.kdf.pbkdf2 import pbkdf2_hmac_sha256, generate_salt  # 🆕 Импорт KDF функций
+from crypto.kdf.key_hierarchy import derive_key as kh_derive_key  # 🆕 Импорт функции иерархии ключей
 
 
 class CryptoCoreCLI:
-    """Класс для обработки командной строки CryptoCore с поддержкой AEAD"""
+    """Класс для обработки командной строки CryptoCore с поддержкой AEAD и KDF"""
 
     @staticmethod
     def create_parser():
-        """Создание парсера аргументов с поддержкой GCM"""
+        """Создание парсера аргументов с поддержкой GCM и KDF"""
         parser = argparse.ArgumentParser(
-            description='CryptoCore - Cryptographic File Operations with AEAD Support',
+            description='CryptoCore - Cryptographic File Operations with AEAD and KDF Support',
             epilog='Examples:\n'
                    '  # Hash computation:\n'
                    '  cryptocore dgst --algorithm sha256 --input document.pdf\n\n'
@@ -38,8 +42,10 @@ class CryptoCoreCLI:
                    '  cryptocore dgst --algorithm sha256 --hmac --key 00112233445566778899aabbccddeeff --input message.txt\n\n'
                    '  # GCM encryption with AAD:\n'
                    '  cryptocore encrypt --algorithm aes --mode gcm --encrypt --key 00112233445566778899aabbccddeeff --input plaintext.txt --output ciphertext.bin --aad aabbccddeeff\n\n'
-                   '  # GCM decryption with AAD:\n'
-                   '  cryptocore encrypt --algorithm aes --mode gcm --decrypt --key 00112233445566778899aabbccddeeff --input ciphertext.bin --output plaintext.txt --aad aabbccddeeff',
+                   '  # Key derivation:\n'
+                   '  cryptocore derive --password "MySecurePassword123!" --salt a1b2c3d4e5f601234567890123456789 --iterations 100000 --length 32\n\n'
+                   '  # Key derivation with auto-generated salt:\n'
+                   '  cryptocore derive --password "AnotherPassword" --iterations 500000 --length 16\n',
             formatter_class=argparse.RawDescriptionHelpFormatter
         )
 
@@ -150,7 +156,7 @@ class CryptoCoreCLI:
         encrypt_parser.add_argument(
             '--mode',
             required=True,
-            choices=['ecb', 'cbc', 'ctr', 'cfb', 'ofb', 'gcm'],  # 🆕 Добавлен GCM
+            choices=['ecb', 'cbc', 'ctr', 'cfb', 'ofb', 'gcm'],
             help='Encryption mode (ecb, cbc, ctr, cfb, ofb, gcm)'
         )
 
@@ -195,6 +201,56 @@ class CryptoCoreCLI:
             '--iv',
             dest='nonce',
             help='Nonce/Initialization Vector as hexadecimal string (12 bytes for GCM)'
+        )
+
+        # 🆕 Subcommand for key derivation (Sprint 7)
+        derive_parser = subparsers.add_parser('derive', help='Key derivation operations (Sprint 7)')
+
+        derive_parser.add_argument(
+            '--password',
+            required=True,
+            help='Password for key derivation'
+        )
+
+        derive_parser.add_argument(
+            '--salt',
+            help='Salt as hexadecimal string (16+ bytes). If not provided, random salt will be generated.'
+        )
+
+        derive_parser.add_argument(
+            '--iterations',
+            type=int,
+            default=100000,
+            help='Number of iterations (default: 100000)'
+        )
+
+        derive_parser.add_argument(
+            '--length',
+            type=int,
+            default=32,
+            help='Key length in bytes (default: 32)'
+        )
+
+        derive_parser.add_argument(
+            '--algorithm',
+            choices=['pbkdf2'],
+            default='pbkdf2',
+            help='KDF algorithm (currently only pbkdf2)'
+        )
+
+        derive_parser.add_argument(
+            '--output',
+            help='Optional: write derived key to file (binary format)'
+        )
+
+        derive_parser.add_argument(
+            '--context',
+            help='Optional: context for key hierarchy derivation'
+        )
+
+        derive_parser.add_argument(
+            '--master-key',
+            help='Optional: master key (hex) for key hierarchy derivation'
         )
 
         return parser
@@ -465,10 +521,10 @@ class CryptoCoreCLI:
             # Выполнение операции
             if args.encrypt:
                 CryptoCoreCLI.encrypt_file(args.input, output_path, key_bytes,
-                                          crypto_mode, aad_bytes, nonce_bytes)
+                                           crypto_mode, aad_bytes, nonce_bytes)
             else:
                 CryptoCoreCLI.decrypt_file(args.input, output_path, key_bytes,
-                                          crypto_mode, aad_bytes, nonce_bytes)
+                                           crypto_mode, aad_bytes, nonce_bytes)
 
             return True
 
@@ -483,8 +539,145 @@ class CryptoCoreCLI:
             return False
 
     @staticmethod
+    def process_derive_operation(args):
+        """
+        Обработка операции вывода ключей (Sprint 7)
+
+        Args:
+            args: Парсированные аргументы командной строки
+
+        Returns:
+            bool: True если операция успешна
+        """
+        try:
+            # Валидация параметров
+            if args.iterations <= 0:
+                raise ValueError("Iterations must be positive")
+            if args.length <= 0:
+                raise ValueError("Key length must be positive")
+            if args.length > (2 ** 32 - 1) * 32:  # Ограничение PBKDF2
+                raise ValueError(f"Key length too large: maximum is {(2 ** 32 - 1) * 32} bytes")
+
+            # Логирование начала операции
+            CryptoLogger.setup_logging()
+            CryptoLogger.log(
+                f"Key derivation started: algorithm={args.algorithm}, "
+                f"iterations={args.iterations}, "
+                f"length={args.length} bytes"
+            )
+
+            # Обработка пароля
+            password = args.password.encode('utf-8')
+
+            # Логирование информации о пароле (без самого пароля)
+            CryptoLogger.log(f"Password length: {len(password)} characters")
+
+            # Обработка соли
+            salt_bytes = None
+            if args.salt:
+                # Валидация hex-строки соли
+                salt_str = args.salt.strip().lower()
+                if not all(c in '0123456789abcdef' for c in salt_str):
+                    raise ValueError("Salt must be a valid hexadecimal string")
+
+                # Проверка минимальной длины соли
+                if len(salt_str) < 32:  # Минимум 16 байт в hex
+                    print(f"Warning: Salt is short ({len(salt_str) // 2} bytes), "
+                          f"recommended minimum is 16 bytes",
+                          file=sys.stderr)
+
+                salt_bytes = bytes.fromhex(salt_str)
+                CryptoLogger.log(f"Using provided salt: {len(salt_bytes)} bytes")
+            else:
+                # Генерация случайной соли
+                salt_bytes = generate_salt(16)
+                print(f"Generated salt: {salt_bytes.hex()}")
+                CryptoLogger.log(f"Generated random salt: {len(salt_bytes)} bytes")
+
+            # Вывод ключа в зависимости от алгоритма
+            derived_key = None
+
+            if args.algorithm == 'pbkdf2':
+                if args.master_key:
+                    print("Warning: --master-key is ignored for PBKDF2 algorithm",
+                          file=sys.stderr)
+
+                if args.context:
+                    print("Warning: --context is ignored for PBKDF2 algorithm",
+                          file=sys.stderr)
+
+                # Вывод ключа с использованием PBKDF2
+                CryptoLogger.log(
+                    f"Starting PBKDF2-HMAC-SHA256 derivation: "
+                    f"password_len={len(password)}, "
+                    f"salt_len={len(salt_bytes)}, "
+                    f"iterations={args.iterations}"
+                )
+
+                derived_key = pbkdf2_hmac_sha256(
+                    password,
+                    salt_bytes,
+                    args.iterations,
+                    args.length
+                )
+
+                CryptoLogger.log(
+                    f"PBKDF2 key derived successfully: "
+                    f"key_length={len(derived_key)} bytes"
+                )
+
+            else:
+                raise ValueError(f"Unsupported KDF algorithm: {args.algorithm}")
+
+            # Запись ключа в файл, если указан --output
+            if args.output:
+                try:
+                    with open(args.output, 'wb') as f:
+                        f.write(derived_key)
+
+                    print(f"Key written to: {args.output} ({len(derived_key)} bytes)")
+                    CryptoLogger.log(
+                        f"Derived key written to file: {args.output}, "
+                        f"size={len(derived_key)} bytes"
+                    )
+
+                    # Вычисление хеша ключа для логирования
+                    key_hash = hashlib.sha256(derived_key).hexdigest()[:16]
+                    CryptoLogger.log(f"Key SHA-256 (first 16 chars): {key_hash}")
+
+                except IOError as e:
+                    error_msg = f"Failed to write key to file: {e}"
+                    CryptoLogger.log(error_msg, is_error=True)
+                    raise ValueError(error_msg)
+
+            # Вывод результата в stdout: KEY_HEX SALT_HEX
+            print(f"{derived_key.hex()} {salt_bytes.hex()}")
+
+            # Безопасная очистка пароля из памяти
+            # Заполняем память нулями вместо простого удаления ссылки
+            password_array = bytearray(password)
+            for i in range(len(password_array)):
+                password_array[i] = 0
+            password = bytes(password_array)
+
+            CryptoLogger.log("Key derivation completed successfully")
+
+            return True
+
+        except ValueError as e:
+            error_msg = f"Validation error: {e}"
+            CryptoLogger.log(error_msg, is_error=True)
+            print(f"Error: {e}", file=sys.stderr)
+            return False
+        except Exception as e:
+            error_msg = f"Unexpected error during key derivation: {e}"
+            CryptoLogger.log(error_msg, is_error=True)
+            print(f"Error: {e}", file=sys.stderr)
+            return False
+
+    @staticmethod
     def encrypt_file(input_path: str, output_path: str, key: bytes, mode: str,
-                    aad: bytes = b"", nonce: bytes = None):
+                     aad: bytes = b"", nonce: bytes = None):
         """
         Шифрование файла с поддержкой GCM
 
@@ -528,7 +721,7 @@ class CryptoCoreCLI:
 
     @staticmethod
     def decrypt_file(input_path: str, output_path: str, key: bytes, mode: str,
-                    aad: bytes = b"", nonce: bytes = None):
+                     aad: bytes = b"", nonce: bytes = None):
         """
         Дешифрование файла с поддержкой GCM
 
@@ -572,7 +765,7 @@ class CryptoCoreCLI:
 
     @staticmethod
     def encrypt_file_gcm(input_path: str, output_path: str, key: bytes,
-                        aad: bytes = b"", nonce: bytes = None):
+                         aad: bytes = b"", nonce: bytes = None):
         """
         GCM encryption with AAD support
 
@@ -606,7 +799,7 @@ class CryptoCoreCLI:
         print(f"Original size: {len(plaintext)} bytes")
         print(f"Encrypted size: {len(encrypted)} bytes")
         print(f"Tag size: 16 bytes")
-        print(f"Structure: 12B nonce + {len(encrypted)-28}B ciphertext + 16B tag")
+        print(f"Structure: 12B nonce + {len(encrypted) - 28}B ciphertext + 16B tag")
 
     @staticmethod
     def decrypt_file_gcm(input_path: str, output_path: str, key: bytes,
@@ -669,6 +862,7 @@ class CryptoCoreCLI:
             if os.path.exists(output_path):
                 os.remove(output_path)
             raise e
+
     @staticmethod
     def process_operation(args):
         """
@@ -678,6 +872,8 @@ class CryptoCoreCLI:
             return CryptoCoreCLI.process_dgst_operation(args)
         elif args.command == 'encrypt':
             return CryptoCoreCLI.process_crypto_operation(args)
+        elif args.command == 'derive':
+            return CryptoCoreCLI.process_derive_operation(args)
         elif CryptoCoreCLI.is_legacy_syntax(args):
             # Старый синтаксис - проверяем обязательные аргументы
             if not args.algorithm:
@@ -702,17 +898,18 @@ class CryptoCoreCLI:
 def main():
     """Главная функция CLI"""
     try:
-        # Инициализация логирования в самом начале
-        from crypto.crypto_logger import CryptoLogger
+        # Инициализация логирования
         CryptoLogger.setup_logging()
-
-        CryptoLogger.log("CryptoCore CLI started")
+        CryptoLogger.log("CryptoCore CLI started with KDF support (Sprint 7)")
 
         # Парсинг аргументов
         args = CryptoCoreCLI.parse_arguments()
 
-        # Логирование аргументов
-        CryptoLogger.log(f"CLI arguments: {vars(args)}")
+        # Логирование аргументов (без паролей для безопасности)
+        args_dict = vars(args).copy()
+        if 'password' in args_dict and args_dict['password']:
+            args_dict['password'] = '***'  # Маскируем пароль в логах
+        CryptoLogger.log(f"CLI arguments: {args_dict}")
 
         # Обработка операции
         success = CryptoCoreCLI.process_operation(args)
