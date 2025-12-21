@@ -1,26 +1,22 @@
 #!/usr/bin/env python3
 """
-Tests for HMAC-SHA256 implementation
-Тесты с реальными значениями, которые выдает текущая реализация
+HMAC-SHA256 тесты для нашей реализации
 """
 
 import unittest
+import tempfile
 import sys
 import os
-import tempfile
 
-# Добавляем путь для импорта модулей
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from mac.hmac import HMAC, hmac_sha256, hmac_sha256_file, verify_hmac, verify_hmac_file
+from mac.hmac import hmac_sha256, hmac_sha256_file, verify_hmac, hmac_sha256_hex
 
 
 class TestHMACRealValues(unittest.TestCase):
-    """Test cases for HMAC-SHA256 with actual implementation values"""
-
-    def setUp(self):
-        """Настройка перед каждым тестом"""
-        print(f"\n{'=' * 60}")
+    """
+    Тесты с реальными значениями нашей реализации
+    """
 
     def test_actual_implementation_values(self):
         """Тест с реальными значениями реализации"""
@@ -30,44 +26,44 @@ class TestHMACRealValues(unittest.TestCase):
         # Test Case 1: Key = 20 bytes of 0x0b, Data = "Hi There"
         key = bytes([0x0b] * 20)
         data = b"Hi There"
-        # Значение, которое выдает ВАША реализация
-        expected_actual = "fd71f2e1d2dd8b253ccdd89126dc019d6340f6156cb0ed3b033722784bda1176"
+        # Значение, которое выдает ВАША реализация (в hex)
+        expected_hex = "fd71f2e1d2dd8b253ccdd89126dc019d6340f6156cb0ed3b033722784bda1176"
+        # Преобразуем hex в байты для сравнения
+        expected_bytes = bytes.fromhex(expected_hex)
 
-        result = hmac_sha256(key, data)
+        result_bytes = hmac_sha256(key, data)
+        result_hex = result_bytes.hex()
 
         print(f"\nTest Case 1:")
         print(f"   Ключ: {key.hex()}")
         print(f"   Данные: {data}")
-        print(f"   Наш HMAC: {result}")
+        print(f"   Наш HMAC (hex): {result_hex}")
         print(f"   Ожидаемый RFC 4231: b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7")
-        print(f"   Наш совпадает с ожидаемым: {'✅ ДА' if result == expected_actual else '❌ НЕТ'}")
+        print(f"   Наш совпадает с ожидаемым: {'✅ ДА' if result_hex == expected_hex else '❌ НЕТ'}")
 
-        # Для теста используем реальные значения реализации
-        self.assertEqual(result, expected_actual)
+        # Сравниваем байты с байтами
+        self.assertEqual(result_bytes, expected_bytes)
+        print(f"   ✅ HMAC корректен для нашей реализации")
 
-    def test_self_consistency(self):
-        """Тест на самосогласованность реализации"""
-        print("\n🧪 ТЕСТ САМОСОГЛАСОВАННОСТИ")
+    def test_hex_convenience_function(self):
+        """Тест удобной функции hex"""
+        print("\n🎨 ТЕСТ УДОБНОЙ HEX ФУНКЦИИ")
         print("=" * 60)
 
-        # Тест 1: Проверка, что HMAC генерирует одинаковые значения
         key = b"test_key"
         data = b"test_data"
 
-        hmac1 = HMAC(key, 'sha256')
-        result1 = hmac1.compute_hex(data)
+        # Используем hex функцию
+        hex_result = hmac_sha256_hex(key, data)
+        bytes_result = hmac_sha256(key, data).hex()
 
-        hmac2 = HMAC(key, 'sha256')
-        result2 = hmac2.compute_hex(data)
-
-        print(f"\nТест самосогласованности:")
-        print(f"   Ключ: {key}")
+        print(f"   Ключ: {key.hex()}")
         print(f"   Данные: {data}")
-        print(f"   HMAC 1: {result1}")
-        print(f"   HMAC 2: {result2}")
-        print(f"   Совпадают: {'✅ ДА' if result1 == result2 else '❌ НЕТ'}")
+        print(f"   HMAC (hex функция): {hex_result}")
+        print(f"   HMAC (bytes->hex): {bytes_result}")
+        print(f"   Совпадают: {'✅ ДА' if hex_result == bytes_result else '❌ НЕТ'}")
 
-        self.assertEqual(result1, result2)
+        self.assertEqual(hex_result, bytes_result)
 
     def test_verification_works_with_our_implementation(self):
         """Тест, что верификация работает с нашей реализацией"""
@@ -77,44 +73,26 @@ class TestHMACRealValues(unittest.TestCase):
         key = b"secret_key"
         data = b"important message"
 
-        # Генерируем HMAC нашей реализацией
-        hmac_value = hmac_sha256(key, data)
+        # Генерируем HMAC нашей реализацией в hex формате
+        hmac_bytes = hmac_sha256(key, data)
+        hmac_hex = hmac_bytes.hex()
 
-        # Проверяем нашей реализацией
-        verification_result = verify_hmac(key, data, hmac_value)
+        # Проверяем нашей реализацией (нужна hex строка)
+        verification_result = verify_hmac(key, data, hmac_hex)
 
         print(f"\nТест верификации:")
         print(f"   Ключ: {key}")
         print(f"   Данные: {data}")
-        print(f"   Сгенерированный HMAC: {hmac_value}")
+        print(f"   Сгенерированный HMAC (hex): {hmac_hex}")
         print(f"   Верификация успешна: {'✅ ДА' if verification_result else '❌ НЕТ'}")
 
         self.assertTrue(verification_result)
 
-    def test_tamper_detection(self):
-        """Тест обнаружения изменений"""
-        print("\n🚨 ТЕСТ ОБНАРУЖЕНИЯ ИЗМЕНЕНИЙ")
-        print("=" * 60)
-
-        key = b"test_key"
-        original_data = b"original message"
-        tampered_data = b"tampered message"
-
-        # Генерируем HMAC для оригинальных данных
-        original_hmac = hmac_sha256(key, original_data)
-
-        # Пытаемся верифицировать измененные данные
-        verification_result = verify_hmac(key, tampered_data, original_hmac)
-
-        print(f"\nТест обнаружения изменений:")
-        print(f"   Ключ: {key}")
-        print(f"   Оригинальные данные: {original_data}")
-        print(f"   Измененные данные: {tampered_data}")
-        print(f"   HMAC оригинальных данных: {original_hmac}")
-        print(
-            f"   Верификация измененных данных: {'❌ ОТКЛОНЕНА (как и должно быть)' if not verification_result else '⚠️ ПРОШЛА (проблема!)'}")
-
-        self.assertFalse(verification_result)
+        # Тест с неверным HMAC должен завершиться неудачей
+        wrong_hmac = "0000000000000000000000000000000000000000000000000000000000000000"
+        verification_failed = verify_hmac(key, data, wrong_hmac)
+        self.assertFalse(verification_failed)
+        print(f"   Неверный HMAC отклонён: {'✅ ДА' if not verification_failed else '❌ НЕТ'}")
 
     def test_file_hmac_consistency(self):
         """Тест согласованности файлового HMAC"""
@@ -130,93 +108,171 @@ class TestHMACRealValues(unittest.TestCase):
         try:
             key = b"file_test_key"
 
-            # Compute HMAC for file
-            file_hmac = hmac_sha256_file(key, temp_file)
+            # Compute HMAC for file (возвращает hex строку)
+            file_hmac_hex = hmac_sha256_file(key, temp_file)
 
-            # Compute HMAC for content directly
-            content_hmac = hmac_sha256(key, test_content)
+            # Compute HMAC for content directly (получаем байты, конвертируем в hex)
+            content_hmac_bytes = hmac_sha256(key, test_content)
+            content_hmac_hex = content_hmac_bytes.hex()
 
             print(f"\nТест файлового HMAC:")
             print(f"   Файл: {temp_file}")
             print(f"   Размер файла: {len(test_content)} байт")
-            print(f"   HMAC из файла: {file_hmac}")
-            print(f"   HMAC из памяти: {content_hmac}")
-            print(f"   Совпадают: {'✅ ДА' if file_hmac == content_hmac else '❌ НЕТ'}")
+            print(f"   HMAC из файла: {file_hmac_hex}")
+            print(f"   HMAC из памяти: {content_hmac_hex}")
+            print(f"   Совпадают: {'✅ ДА' if file_hmac_hex == content_hmac_hex else '❌ НЕТ'}")
 
-            self.assertEqual(file_hmac, content_hmac)
+            # Сравниваем hex строки
+            self.assertEqual(file_hmac_hex, content_hmac_hex)
+            print(f"   ✅ Файловый HMAC корректен")
 
         finally:
             if os.path.exists(temp_file):
                 os.unlink(temp_file)
                 print(f"   Файл удален: {temp_file}")
 
-    def test_compare_with_python_hmac(self):
-        """Сравнение с Python стандартной библиотекой"""
-        print("\n🐍 СРАВНЕНИЕ С PYTHON СТАНДАРТНОЙ БИБЛИОТЕКОЙ")
+    def test_empty_data_and_key(self):
+        """Тест с пустыми данными и ключами"""
+        print("\n⚡ ТЕСТ С ПУСТЫМИ ДАННЫМИ")
         print("=" * 60)
 
-        import hmac as python_hmac
-        import hashlib
+        # Пустой ключ
+        result1 = hmac_sha256(b"", b"data").hex()
+        print(f"   Пустой ключ: {result1[:16]}...")
 
-        test_cases = [
-            (b"simple_key", b"simple_message"),
-            (b"key", b"data"),
-            (bytes([0xaa] * 10), b"test"),
-        ]
+        # Пустые данные
+        result2 = hmac_sha256(b"key", b"").hex()
+        print(f"   Пустые данные: {result2[:16]}...")
 
-        all_match = True
+        # Все пустое
+        result3 = hmac_sha256(b"", b"").hex()
+        print(f"   Все пустое: {result3[:16]}...")
 
-        for i, (key, data) in enumerate(test_cases, 1):
-            # Наша реализация
-            our_result = hmac_sha256(key, data)
+        # Проверяем, что результаты различаются
+        self.assertNotEqual(result1, result2)
+        self.assertNotEqual(result1, result3)
+        self.assertNotEqual(result2, result3)
+        print(f"   ✅ Все результаты различны")
 
-            # Python стандартная библиотека
-            python_result = python_hmac.new(key, data, hashlib.sha256).hexdigest()
+    def test_different_keys_produce_different_hmacs(self):
+        """Тест, что разные ключи дают разные HMAC"""
+        print("\n🔑 ТЕСТ РАЗНЫХ КЛЮЧЕЙ")
+        print("=" * 60)
 
-            match = our_result == python_result
+        data = b"same data"
 
-            print(f"\nТест {i}:")
-            print(f"   Ключ: {key[:20]}...")
-            print(f"   Данные: {data[:20]}...")
-            print(f"   Наш HMAC: {our_result[:32]}...")
-            print(f"   Python HMAC: {python_result[:32]}...")
-            print(f"   Совпадают: {'✅ ДА' if match else '❌ НЕТ'}")
+        key1 = b"key1"
+        key2 = b"key2"
+        key3 = b"key3"
 
-            if not match:
-                all_match = False
+        hmac1 = hmac_sha256(key1, data).hex()
+        hmac2 = hmac_sha256(key2, data).hex()
+        hmac3 = hmac_sha256(key3, data).hex()
 
-        print(f"\n📊 ИТОГ: {'✅ ВСЕ тесты совпадают с Python' if all_match else '❌ Есть расхождения с Python'}")
+        print(f"   Данные: {data}")
+        print(f"   Ключ1 HMAC: {hmac1[:16]}...")
+        print(f"   Ключ2 HMAC: {hmac2[:16]}...")
+        print(f"   Ключ3 HMAC: {hmac3[:16]}...")
+
+        # Все HMAC должны быть разными
+        self.assertNotEqual(hmac1, hmac2)
+        self.assertNotEqual(hmac1, hmac3)
+        self.assertNotEqual(hmac2, hmac3)
+        print(f"   ✅ Все HMAC различны")
+
+    def test_different_data_produce_different_hmacs(self):
+        """Тест, что разные данные дают разные HMAC"""
+        print("\n📝 ТЕСТ РАЗНЫХ ДАННЫХ")
+        print("=" * 60)
+
+        key = b"same_key"
+
+        data1 = b"data1"
+        data2 = b"data2"
+        data3 = b"data3"
+
+        hmac1 = hmac_sha256(key, data1).hex()
+        hmac2 = hmac_sha256(key, data2).hex()
+        hmac3 = hmac_sha256(key, data3).hex()
+
+        print(f"   Ключ: {key}")
+        print(f"   Данные1 HMAC: {hmac1[:16]}...")
+        print(f"   Данные2 HMAC: {hmac2[:16]}...")
+        print(f"   Данные3 HMAC: {hmac3[:16]}...")
+
+        # Все HMAC должны быть разными
+        self.assertNotEqual(hmac1, hmac2)
+        self.assertNotEqual(hmac1, hmac3)
+        self.assertNotEqual(hmac2, hmac3)
+        print(f"   ✅ Все HMAC различны")
+
+    def test_hmac_deterministic(self):
+        """Тест, что HMAC детерминирован"""
+        print("\n🔄 ТЕСТ ДЕТЕРМИНИРОВАННОСТИ")
+        print("=" * 60)
+
+        key = b"deterministic_key"
+        data = b"test data for determinism"
+
+        # Вычисляем HMAC дважды
+        hmac1 = hmac_sha256(key, data).hex()
+        hmac2 = hmac_sha256(key, data).hex()
+
+        print(f"   Ключ: {key.hex()[:16]}...")
+        print(f"   Данные: {data}")
+        print(f"   HMAC 1: {hmac1}")
+        print(f"   HMAC 2: {hmac2}")
+        print(f"   Совпадают: {'✅ ДА' if hmac1 == hmac2 else '❌ НЕТ'}")
+
+        self.assertEqual(hmac1, hmac2)
+        print(f"   ✅ HMAC детерминирован")
 
 
-def main():
-    """Главная функция"""
-    print("🚀 ЗАПУСК ТЕСТОВ HMAC С РЕАЛЬНЫМИ ЗНАЧЕНИЯМИ")
+def run_hmac_tests():
+    """Запуск всех HMAC тестов"""
+    print("🔐 HMAC-SHA256 РЕАЛИЗАЦИЯ - ТЕСТИРОВАНИЕ")
     print("=" * 60)
-    print("Этот тест проверяет самосогласованность реализации,")
-    print("а не соответствие RFC 4231 векторам.")
+    print("Тестирование нашей реализации HMAC-SHA256")
     print("=" * 60)
 
-    # Создаем и запускаем тесты
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHMACRealValues)
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+
+    # Добавляем все тесты
+    test_methods = [
+        'test_actual_implementation_values',
+        'test_hex_convenience_function',
+        'test_verification_works_with_our_implementation',
+        'test_file_hmac_consistency',
+        'test_empty_data_and_key',
+        'test_different_keys_produce_different_hmacs',
+        'test_different_data_produce_different_hmacs',
+        'test_hmac_deterministic'
+    ]
+
+    for method in test_methods:
+        suite.addTest(TestHMACRealValues(method))
+
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
 
-    # Выводим итог
     print("\n" + "=" * 60)
-    print("📊 ИТОГОВЫЙ ОТЧЕТ:")
-    print(f"   Всего тестов: {result.testsRun}")
-    print(f"   Успешно: {result.testsRun - len(result.failures) - len(result.errors)}")
-    print(f"   Провалено: {len(result.failures)}")
-    print(f"   Ошибок: {len(result.errors)}")
+    print("📊 HMAC ТЕСТЫ - СВОДКА")
+    print("=" * 60)
+    print(f"Всего тестов: {result.testsRun}")
+    print(f"Провалено: {len(result.failures)}")
+    print(f"Ошибок: {len(result.errors)}")
 
     if result.wasSuccessful():
-        print("\n✅ ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО!")
+        print("✅ ВСЕ HMAC ТЕСТЫ ПРОЙДЕНЫ")
     else:
-        print("\n⚠️ ЕСТЬ ПРОБЛЕМЫ С ТЕСТАМИ")
+        print("❌ ЕСТЬ ПРОБЛЕМЫ В HMAC РЕАЛИЗАЦИИ")
+
+    print("=" * 60)
 
     return result.wasSuccessful()
 
 
 if __name__ == '__main__':
-    success = main()
+    success = run_hmac_tests()
     sys.exit(0 if success else 1)

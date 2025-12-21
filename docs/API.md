@@ -26,7 +26,7 @@ CryptoCore - это криптографическая библиотека на
 ### Установка
 ```bash
 # Клонирование репозитория
-git clone <repository-url>
+git clone 
 cd CryptoCore
 
 # Установка зависимостей

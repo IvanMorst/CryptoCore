@@ -123,6 +123,8 @@ CryptoCore/
 
 #### psutil>=5.8.0 - системная информация для генерации энтропии
 
+### pytest==8.4.2
+
 ## Установка зависимостей
 ```bash
 
@@ -130,14 +132,14 @@ pip install -r requirements.txt
 ````
 ## Инструкции по сборке и установке
 
-bash
+
 ## Клонирование репозитория
-git clone <repository-url>
+```bash
+git clone https://github.com/IvanMorst/CryptoCore.git
+```
+```bash
 cd CryptoCore
-
-## Перезапись удалённой версии на локальную
-git push --force-with-lease origin master
-
+````
 
 ## Создаем виртуальное окружение в папке проекта
 
@@ -175,7 +177,7 @@ python cryptocore.py --help
 ### Создание простого текстового файла
 ```bash
 
-echo "This is a test file for CryptoCore encryption" > test_document.txt
+echo "This is a test file for CryptoCore encryption" > plaintext.txt
 ````
 
 ### Создание бинарного тестового файла
@@ -230,6 +232,11 @@ python -c "from csprng import generate_key; print('Random key:', generate_key(16
 
 ## Тестирование
 
+### Запуск всех тестов через Pytest
+
+```bash
+pytest tests/ -v
+```
 ### Тестирование функции иерархии ключей
 
 ```bash

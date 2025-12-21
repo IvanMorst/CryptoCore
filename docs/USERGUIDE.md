@@ -20,7 +20,9 @@
 ```bash
 
 # Clone the repository
+
 git clone https://github.com/IvanMorst/CryptoCore.git
+
 cd CryptoCore
 ```
 ### Create virtual environment
@@ -29,37 +31,35 @@ cd CryptoCore
 python -m venv venv
 ```
 ### Activate virtual environment
-#### On Windows:
+```bash
+
+ On Windows:
 venv\Scripts\activate
-#### On Linux/Mac:
+ On Linux/Mac:
 source venv/bin/activate
-
-# Install in development mode
-pip install -e .
-
-# Or install with development dependencies
-pip install -e ".[dev]"
-As Package
-bash
+```
 
 ## Basic Usage
-CryptoCore provides a command-line interface (CLI) with subcommands:
+### CryptoCore provides a command-line interface (CLI) with subcommands:
 
-bash
+```bash
 # General syntax
 python <command> [options]
 
 # Get help
-python --help
-python <command> --help
-Available commands:
 
+```bash
+python --help
+````
+
+### Available commands:
+````
 encrypt: File encryption/decryption
 
 dgst: Hash and HMAC computation
 
 derive: Key derivation from passwords
-
+````
 ## Encryption & Decryption
 
 ### Basic Encryption
@@ -104,7 +104,7 @@ python encrypt --algorithm aes --mode ofb --encrypt \
 python encrypt --algorithm aes --mode cbc --encrypt \
   --input secret.txt
   ```
-# Key will be generated and displayed: "Generated random key: xxxx..."
+### Key will be generated and displayed: "Generated random key: xxxx..."
 
 ### Different Key Sizes
 ```bash
@@ -196,46 +196,59 @@ python derive --password "AnotherPassword" \
 # Output: DERIVED_KEY_HEX GENERATED_SALT_HEX
 
 # Save derived key to file
+
+```bash
+
 python derive --password "app_key" \
   --iterations 100000 --length 32 --output app.key
+  ```
+
 ## Practical Example
-bash
+```bash
 # Generate encryption key from password
 python derive --password "$(cat ~/.secure_password)" \
   --iterations 100000 --length 32 > derived_key.txt
+```
 
-# Extract key and use for encryption
+### Extract key and use for encryption
+````
 KEY=$(cut -d' ' -f1 derived_key.txt)
 SALT=$(cut -d' ' -f2 derived_key.txt)
+````
 
 python encrypt --algorithm aes --mode gcm --encrypt \
   --key $KEY --input sensitive.dat
-Authenticated Encryption
-GCM Encryption with AAD
-bash
+
+## Authenticated Encryption
+### GCM Encryption with AAD
+```bash
 # Encrypt with Additional Authenticated Data (AAD)
 python encrypt --algorithm aes --mode gcm --encrypt \
   --key 00112233445566778899aabbccddeeff \
   --input plaintext.txt --output ciphertext.bin \
   --aad aabbccddeeff00112233445566778899
-
-# Decrypt with same AAD
+```
+### Decrypt with same AAD
+```bash
 python encrypt --algorithm aes --mode gcm --decrypt \
   --key 00112233445566778899aabbccddeeff \
   --input ciphertext.bin --output decrypted.txt \
   --aad aabbccddeeff00112233445566778899
-AAD Examples
+  ```
+## AAD Examples
 
-# Enable verbose output
+### Enable verbose output
+``````
 export CRYPTOCORE_DEBUG=1
 python encrypt --algorithm aes --mode cbc --encrypt \
   --key 00112233445566778899aabbccddeeff \
   --input test.txt
-
+``````
 # Check log file
 tail -f crypto.log
-Security Best Practices
-Key Management
+## Security Best Practices
+### Key Management
+````
 Never hardcode keys in scripts or source code
 
 Use password-based key derivation (PBKDF2) for user passwords
@@ -245,7 +258,7 @@ Store keys securely - use key management systems in production
 Rotate keys regularly for long-term data protection
 
 Use different keys for different purposes
-
+````
 Encryption Practices
 Prefer GCM mode for authenticated encryption
 
@@ -278,29 +291,29 @@ Regular updates to address vulnerabilities
 ## Cheat Sheet
 ### Quick Reference
 ### Encryption
-bash
-# AES-CBC encryption
+```bash
+### AES-CBC encryption
 python encrypt --algorithm aes --mode cbc --encrypt --key HEX_KEY --input FILE
 
-# AES-CTR encryption (no padding)
+###  AES-CTR encryption (no padding)
 python encrypt --algorithm aes --mode ctr --encrypt --key HEX_KEY --input FILE
 
-# AES-GCM with AAD
+### AES-GCM with AAD
 python encrypt --algorithm aes --mode gcm --encrypt --key HEX_KEY --input FILE --aad HEX_AAD
 Hashing
 bash
-# SHA-256
+### SHA-256
 python dgst --algorithm sha256 --input FILE
 
-# SHA3-256
+### SHA3-256
 python dgst --algorithm sha3-256 --input FILE
 HMAC
 bash
-# HMAC-SHA256
+### HMAC-SHA256
 python dgst --algorithm sha256 --hmac --key HEX_KEY --input FILE
 Key Derivation
 bash
-# PBKDF2
+### PBKDF2
 python derive --password "PASSWORD" --iterations 100000 --length 32
 Common Key Sizes
 AES-128: 16 bytes (32 hex characters)
@@ -316,8 +329,10 @@ SHA-256 hash: 32 bytes (64 hex characters)
 HMAC-SHA256: 32 bytes (64 hex characters)
 
 GCM tag: 16 bytes (32 hex characters)
+```
 
-File Extensions Convention
+## File Extensions Convention
+````
 .enc - Encrypted files
 
 .dec - Decrypted files
@@ -327,27 +342,29 @@ File Extensions Convention
 .hmac - HMAC files
 
 .key - Key files
-
+````
 Example Workflow
-bash
-# 1. Generate strong key
+```bash
+### 1. Generate strong key
 KEY=$(openssl rand -hex 32)
 
-# 2. Encrypt file
+### 2. Encrypt file
 python encrypt --algorithm aes --mode gcm --encrypt \
   --key $KEY --input document.pdf --output document.pdf.enc
 
-# 3. Create hash for verification
+### 3. Create hash for verification
 python dgst --algorithm sha256 --input document.pdf > document.pdf.sha256
 
-# 4. Decrypt when needed
+### 4. Decrypt when needed
 python encrypt --algorithm aes --mode gcm --decrypt \
   --key $KEY --input document.pdf.enc --output document_restored.pdf
 
-# 5. Verify integrity
+### 5. Verify integrity
 python dgst --algorithm sha256 --input document_restored.pdf
 # Compare with saved hash
+```
 ### Getting Help
+``````
 Check --help for any command
 
 Review this user guide
@@ -359,5 +376,5 @@ Check log file crypto.log for detailed information
 File issues on GitHub for bugs or questions
 
 Remember: Cryptography is complex. When in doubt, consult with security professionals for critical applications.
-
+``````
 text
