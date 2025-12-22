@@ -540,138 +540,104 @@ class CryptoCoreCLI:
 
     @staticmethod
     def process_derive_operation(args):
-        """
-        Обработка операции вывода ключей (Sprint 7)
-
-        Args:
-            args: Парсированные аргументы командной строки
-
-        Returns:
-            bool: True если операция успешна
-        """
+        """Обработка операции вывода ключей"""
         try:
-            # Валидация параметров
+            # Проверка параметров
             if args.iterations <= 0:
                 raise ValueError("Iterations must be positive")
             if args.length <= 0:
                 raise ValueError("Key length must be positive")
-            if args.length > (2 ** 32 - 1) * 32:  # Ограничение PBKDF2
-                raise ValueError(f"Key length too large: maximum is {(2 ** 32 - 1) * 32} bytes")
 
             # Логирование начала операции
+            from crypto.crypto_logger import CryptoLogger
             CryptoLogger.setup_logging()
-            CryptoLogger.log(
-                f"Key derivation started: algorithm={args.algorithm}, "
-                f"iterations={args.iterations}, "
-                f"length={args.length} bytes"
-            )
+            CryptoLogger.log(f"Key derivation started: algorithm={args.algorithm}, iterations={args.iterations}")
 
-            # Обработка пароля
-            password = args.password.encode('utf-8')
+            # Проверка режима иерархии ключей
+            if args.master_key and args.context:
+                # Key Hierarchy mode
+                CryptoLogger.log("Using key hierarchy mode")
 
-            # Логирование информации о пароле (без самого пароля)
-            CryptoLogger.log(f"Password length: {len(password)} characters")
+                # Валидация мастер-ключа
+                master_key = CryptoCoreCLI.validate_hex_key(args.master_key, for_hmac=True)
+                if not args.context:
+                    raise ValueError("Context is required for key hierarchy mode")
 
-            # Обработка соли
-            salt_bytes = None
-            if args.salt:
-                # Валидация hex-строки соли
-                salt_str = args.salt.strip().lower()
-                if not all(c in '0123456789abcdef' for c in salt_str):
-                    raise ValueError("Salt must be a valid hexadecimal string")
+                # Используем key_hierarchy для вывода ключа
+                from crypto.kdf.key_hierarchy import derive_key as kh_derive_key
+                derived_key = kh_derive_key(master_key, args.context, args.length)
+                salt_bytes = b''  # No salt in key hierarchy mode
+                salt_was_generated = False
 
-                # Проверка минимальной длины соли
-                if len(salt_str) < 32:  # Минимум 16 байт в hex
-                    print(f"Warning: Salt is short ({len(salt_str) // 2} bytes), "
-                          f"recommended minimum is 16 bytes",
-                          file=sys.stderr)
+                CryptoLogger.log(f"Key hierarchy derived: master_key_length={len(master_key)}, "
+                                 f"context={args.context}, key_length={len(derived_key)}")
 
-                salt_bytes = bytes.fromhex(salt_str)
-                CryptoLogger.log(f"Using provided salt: {len(salt_bytes)} bytes")
             else:
-                # Генерация случайной соли
-                salt_bytes = generate_salt(16)
-                print(f"Generated salt: {salt_bytes.hex()}")
-                CryptoLogger.log(f"Generated random salt: {len(salt_bytes)} bytes")
+                # Standard PBKDF2 mode
+                CryptoLogger.log("Using PBKDF2 mode")
 
-            # Вывод ключа в зависимости от алгоритма
-            derived_key = None
+                # Обработка пароля
+                password = args.password.encode('utf-8')
 
-            if args.algorithm == 'pbkdf2':
-                if args.master_key:
-                    print("Warning: --master-key is ignored for PBKDF2 algorithm",
-                          file=sys.stderr)
-
-                if args.context:
-                    print("Warning: --context is ignored for PBKDF2 algorithm",
-                          file=sys.stderr)
+                # Обработка соли
+                salt_bytes = None
+                if args.salt:
+                    # Валидация hex-строки соли
+                    salt_str = args.salt.strip().lower()
+                    if not all(c in '0123456789abcdef' for c in salt_str):
+                        raise ValueError("Salt must be a valid hexadecimal string")
+                    salt_bytes = bytes.fromhex(salt_str)
+                    salt_was_generated = False
+                else:
+                    # Генерация случайной соли
+                    salt_bytes = generate_salt(16)
+                    salt_was_generated = True
 
                 # Вывод ключа с использованием PBKDF2
-                CryptoLogger.log(
-                    f"Starting PBKDF2-HMAC-SHA256 derivation: "
-                    f"password_len={len(password)}, "
-                    f"salt_len={len(salt_bytes)}, "
-                    f"iterations={args.iterations}"
-                )
-
-                derived_key = pbkdf2_hmac_sha256(
-                    password,
-                    salt_bytes,
-                    args.iterations,
-                    args.length
-                )
-
-                CryptoLogger.log(
-                    f"PBKDF2 key derived successfully: "
-                    f"key_length={len(derived_key)} bytes"
-                )
-
-            else:
-                raise ValueError(f"Unsupported KDF algorithm: {args.algorithm}")
-
-            # Запись ключа в файл, если указан --output
-            if args.output:
-                try:
-                    with open(args.output, 'wb') as f:
-                        f.write(derived_key)
-
-                    print(f"Key written to: {args.output} ({len(derived_key)} bytes)")
-                    CryptoLogger.log(
-                        f"Derived key written to file: {args.output}, "
-                        f"size={len(derived_key)} bytes"
+                if args.algorithm == 'pbkdf2':
+                    derived_key = pbkdf2_hmac_sha256(
+                        password,
+                        salt_bytes,
+                        args.iterations,
+                        args.length
                     )
 
-                    # Вычисление хеша ключа для логирования
-                    key_hash = hashlib.sha256(derived_key).hexdigest()[:16]
-                    CryptoLogger.log(f"Key SHA-256 (first 16 chars): {key_hash}")
+                    CryptoLogger.log(
+                        f"PBKDF2 key derived: "
+                        f"password_length={len(password)}, "
+                        f"salt_length={len(salt_bytes)}, "
+                        f"iterations={args.iterations}, "
+                        f"key_length={len(derived_key)}"
+                    )
+                else:
+                    raise ValueError(f"Unsupported algorithm: {args.algorithm}")
 
-                except IOError as e:
-                    error_msg = f"Failed to write key to file: {e}"
-                    CryptoLogger.log(error_msg, is_error=True)
-                    raise ValueError(error_msg)
+                # Очистка пароля из памяти
+                password = b'\x00' * len(password)
 
-            # Вывод результата в stdout: KEY_HEX SALT_HEX
-            print(f"{derived_key.hex()} {salt_bytes.hex()}")
+            # Формат вывода: KEY_HEX SALT_HEX (требование CLI-3)
+            # Для key hierarchy режима salt будет пустым
+            salt_hex = salt_bytes.hex() if salt_bytes else ""
+            output_line = f"{derived_key.hex()} {salt_hex}".strip()
 
-            # Безопасная очистка пароля из памяти
-            # Заполняем память нулями вместо простого удаления ссылки
-            password_array = bytearray(password)
-            for i in range(len(password_array)):
-                password_array[i] = 0
-            password = bytes(password_array)
+            if args.output:
+                # Запись ключа в файл (бинарный формат)
+                with open(args.output, 'wb') as f:
+                    f.write(derived_key)
+                # Также выводим в stdout в требуемом формате
+                print(output_line)
+            else:
+                # Только stdout в требуемом формате
+                print(output_line)
 
-            CryptoLogger.log("Key derivation completed successfully")
+            if salt_was_generated:
+                # Выводим информацию о сгенерированной соли отдельно
+                print(f"Note: Salt was auto-generated: {salt_bytes.hex()}", file=sys.stderr)
 
             return True
 
-        except ValueError as e:
-            error_msg = f"Validation error: {e}"
-            CryptoLogger.log(error_msg, is_error=True)
-            print(f"Error: {e}", file=sys.stderr)
-            return False
         except Exception as e:
-            error_msg = f"Unexpected error during key derivation: {e}"
-            CryptoLogger.log(error_msg, is_error=True)
+            CryptoLogger.log(f"Key derivation failed: {e}", is_error=True)
             print(f"Error: {e}", file=sys.stderr)
             return False
 

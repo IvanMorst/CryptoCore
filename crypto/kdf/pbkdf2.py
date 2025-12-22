@@ -4,12 +4,11 @@ RFC 2898 compliant implementation using HMAC-SHA256
 """
 
 import struct
-import hashlib
 from typing import Union
 import os
 
 # Импорт нашей реализации HMAC
-from mac.hmac import hmac_sha256
+from mac.hmac import HMAC
 
 
 class PBKDF2:
@@ -18,14 +17,23 @@ class PBKDF2:
     Uses HMAC-SHA256 as the underlying PRF
     """
 
-    def __init__(self, prf: callable = None):
+    def __init__(self):
+        """Initialize PBKDF2 with HMAC-SHA256"""
+        pass
+
+    def _hmac_sha256(self, key: bytes, data: bytes) -> bytes:
         """
-        Initialize PBKDF2 with a PRF (default: HMAC-SHA256)
+        HMAC-SHA256 wrapper for PBKDF2
 
         Args:
-            prf: Pseudorandom function (default: HMAC-SHA256)
+            key: HMAC key
+            data: Data to authenticate
+
+        Returns:
+            bytes: HMAC-SHA256 result
         """
-        self.prf = prf or hmac_sha256
+        hmac = HMAC(key, 'sha256')
+        return hmac.compute(data)
 
     def derive(self, password: Union[str, bytes],
                salt: Union[str, bytes],
@@ -72,17 +80,17 @@ class PBKDF2:
         for i in range(1, blocks_needed + 1):
             # U1 = PRF(password, salt || INT_32_BE(i))
             block_salt = salt + struct.pack('>I', i)
-            u_prev = self.prf(password, block_salt)
-            block = u_prev
+            u_block = self._hmac_sha256(password, block_salt)
+            block_result = u_block
 
             # Compute U2 through Uc
             for _ in range(2, iterations + 1):
-                u_curr = self.prf(password, u_prev)
-                # XOR u_curr into block
-                block = bytes(a ^ b for a, b in zip(block, u_curr))
-                u_prev = u_curr
+                u_curr = self._hmac_sha256(password, u_block)
+                # XOR current U with block_result
+                block_result = bytes(x ^ y for x, y in zip(block_result, u_curr))
+                u_block = u_curr
 
-            derived_key += block
+            derived_key += block_result
 
         # Return exactly dklen bytes
         return derived_key[:dklen]

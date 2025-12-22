@@ -1,16 +1,19 @@
 """
 Key Hierarchy Function - Deriving multiple keys from a master key
-Deterministic HMAC-based key derivation
+Deterministic HMAC-based key derivation following RFC 5869 HKDF pattern
 """
 
-import struct  # <-- ДОБАВИТЬ ИМПОРТ
-from typing import Union
+import struct
+from typing import Union, List, Dict
+
+# Импорт нашей реализации HMAC
 from mac.hmac import HMAC
 
 
 class KeyHierarchy:
     """
     Key hierarchy for deriving multiple keys from a master key
+    Uses HMAC-based key derivation similar to HKDF
     """
 
     @staticmethod
@@ -18,7 +21,7 @@ class KeyHierarchy:
                    context: Union[str, bytes],
                    length: int = 32) -> bytes:
         """
-        Derive a key from a master key using deterministic HMAC-based method
+        Derive a key from a master key using HMAC-based method
 
         Args:
             master_key: Master key (bytes)
@@ -37,16 +40,30 @@ class KeyHierarchy:
         if length <= 0:
             raise ValueError("Key length must be positive")
 
+        # HKDF Extract: PRK = HMAC(salt, IKM) where salt is empty
+        hmac_extract = HMAC(b'', 'sha256')
+        prk = hmac_extract.compute(master_key)  # Extract with master key as message
+
+        # HKDF Expand: Generate enough output
         derived = b''
         counter = 1
+        output_length = 0
 
-        # Generate enough HMAC output to meet length requirement
-        while len(derived) < length:
-            # T_i = HMAC(master_key, context || INT_32_BE(counter))
-            block_data = context + struct.pack('>I', counter)
-            hmac = HMAC(master_key, 'sha256')
-            block = hmac.compute(block_data)
+        while output_length < length:
+            # T(i) = HMAC(PRK, T(i-1) || info || counter)
+            # where T(0) is empty
+            if counter == 1:
+                # First iteration: HMAC(PRK, info || 0x01)
+                block_data = context + struct.pack('B', counter)
+            else:
+                # Subsequent iterations: HMAC(PRK, T(i-1) || info || counter)
+                prev_block = derived[-32:]  # Last 32 bytes (SHA-256 output)
+                block_data = prev_block + context + struct.pack('B', counter)
+
+            hmac_expand = HMAC(prk, 'sha256')
+            block = hmac_expand.compute(block_data)
             derived += block
+            output_length += len(block)
             counter += 1
 
         # Return exactly requested length
@@ -54,8 +71,8 @@ class KeyHierarchy:
 
     @staticmethod
     def derive_keys(master_key: bytes,
-                    contexts: list,
-                    length: int = 32) -> dict:
+                    contexts: List[str],
+                    length: int = 32) -> Dict[str, bytes]:
         """
         Derive multiple keys for different contexts
 
@@ -83,7 +100,7 @@ def derive_key(master_key: bytes,
 
 
 def derive_keys(master_key: bytes,
-                contexts: list,
-                length: int = 32) -> dict:
+                contexts: List[str],
+                length: int = 32) -> Dict[str, bytes]:
     """Convenience function for deriving multiple keys"""
     return KeyHierarchy.derive_keys(master_key, contexts, length)

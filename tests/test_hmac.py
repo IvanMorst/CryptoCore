@@ -26,10 +26,8 @@ class TestHMACRealValues(unittest.TestCase):
         # Test Case 1: Key = 20 bytes of 0x0b, Data = "Hi There"
         key = bytes([0x0b] * 20)
         data = b"Hi There"
-        # Значение, которое выдает ВАША реализация (в hex)
-        expected_hex = "fd71f2e1d2dd8b253ccdd89126dc019d6340f6156cb0ed3b033722784bda1176"
-        # Преобразуем hex в байты для сравнения
-        expected_bytes = bytes.fromhex(expected_hex)
+        # Теперь ожидаем правильный RFC 4231 результат!
+        expected_hex = "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"
 
         result_bytes = hmac_sha256(key, data)
         result_hex = result_bytes.hex()
@@ -38,12 +36,11 @@ class TestHMACRealValues(unittest.TestCase):
         print(f"   Ключ: {key.hex()}")
         print(f"   Данные: {data}")
         print(f"   Наш HMAC (hex): {result_hex}")
-        print(f"   Ожидаемый RFC 4231: b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7")
-        print(f"   Наш совпадает с ожидаемым: {'✅ ДА' if result_hex == expected_hex else '❌ НЕТ'}")
+        print(f"   Ожидаемый RFC 4231: {expected_hex}")
+        print(f"   Наш совпадает с RFC 4231: {'✅ ДА' if result_hex == expected_hex else '❌ НЕТ'}")
 
         # Сравниваем байты с байтами
-        self.assertEqual(result_bytes, expected_bytes)
-        print(f"   ✅ HMAC корректен для нашей реализации")
+        self.assertEqual(result_bytes, bytes.fromhex(expected_hex))
 
     def test_hex_convenience_function(self):
         """Тест удобной функции hex"""

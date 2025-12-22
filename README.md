@@ -134,6 +134,7 @@ pip install -r requirements.txt
 
 
 ## Клонирование репозитория
+
 ```bash
 git clone https://github.com/IvanMorst/CryptoCore.git
 ```
@@ -457,7 +458,6 @@ python cryptocore.py --algorithm aes --mode ecb --encrypt --key 001122 --input t
 ```bash
 python cryptocore.py --algorithm aes --mode ecb --encrypt --key 00112233445566778899aabbccddeefg --input test.txt --output test.enc
 ```
-
 
 
 ## Шифрование и дешифрование в режиме ECB
