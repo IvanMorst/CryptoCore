@@ -1,9 +1,10 @@
 import os
+import sys
 import time
 import hashlib
 from crypto.cipher_core import CipherCore
+from crypto.crypto_logger import CryptoLogger
 
-# Импорт для логирования
 try:
     from crypto.crypto_logger import CryptoLogger
 
@@ -14,342 +15,307 @@ except ImportError:
 
 
 class FileProcessor:
+    CHUNK_SIZE = 64 * 1024 * 1024  # 64 МБ
 
     @staticmethod
     def _init_logging():
-        """Инициализация логирования"""
         if LOGGING_AVAILABLE:
             CryptoLogger.setup_logging()
+
+    @staticmethod
+    def _print_progress(current: int, total: int, speed: float = None,
+                        chunk_num: int = None, total_chunks: int = None):
+        """Вывод прогресса без использования CryptoLogger.log_progress"""
+        percent = (current / total) * 100 if total > 0 else 0
+        current_mb = current / (1024 * 1024)
+        total_mb = total / (1024 * 1024)
+
+        message = f"\rProgress: {current_mb:.1f}/{total_mb:.1f} MB ({percent:.1f}%)"
+
+        if speed:
+            message += f" | Speed: {speed:.1f} MB/s"
+
+        if chunk_num and total_chunks:
+            message += f" | Chunk: {chunk_num}/{total_chunks}"
+
+        sys.stdout.write(message)
+        sys.stdout.flush()
+
+    @staticmethod
+    def _process_ecb_cbc_streaming(input_path: str, output_path: str, key: bytes,
+                                   mode: str, encrypt: bool, iv: bytes = None):
+        """
+        🆕 СПЕЦИАЛЬНАЯ ОБРАБОТКА ДЛЯ ECB И CBC
+        Эти режимы требуют особой обработки из-за паддинга
+        """
+        FileProcessor._init_logging()
+
+        if not os.path.exists(input_path):
+            raise FileNotFoundError(f"Input file not found: {input_path}")
+
+        file_size = os.path.getsize(input_path)
+        operation = "ENCRYPTION" if encrypt else "DECRYPTION"
+
+        if LOGGING_AVAILABLE:
+            CryptoLogger.log(
+                f"Starting SPECIAL {operation} for {mode.upper()}\n"
+                f"   Input: {input_path}\n"
+                f"   Output: {output_path}\n"
+                f"   Size: {file_size:,} bytes"
+            )
+
+        print(f"\n Starting {operation.lower()} in {mode.upper()} mode...")
+        print(f"   File size: {file_size / (1024 * 1024):.2f} MB")
+
+        start_time = time.time()
+
+        try:
+            # 🆕 Для ECB/CBC используем упрощенный подход
+            if encrypt:
+                # Шифрование: читаем весь файл и шифруем целиком
+                # Это не потоково, но гарантирует корректность паддинга
+                with open(input_path, 'rb') as f:
+                    data = f.read()
+
+                cipher = CipherCore(key, mode, iv)
+                encrypted = cipher.encrypt(data)
+
+                with open(output_path, 'wb') as f:
+                    f.write(encrypted)
+
+                if LOGGING_AVAILABLE:
+                    CryptoLogger.log(f"Encrypted {len(data)} -> {len(encrypted)} bytes")
+
+            else:
+                # Дешифрование: также читаем весь файл
+                with open(input_path, 'rb') as f:
+                    data = f.read()
+
+                cipher = CipherCore(key, mode, iv)
+                decrypted = cipher.decrypt(data)
+
+                with open(output_path, 'wb') as f:
+                    f.write(decrypted)
+
+                if LOGGING_AVAILABLE:
+                    CryptoLogger.log(f"Decrypted {len(data)} -> {len(decrypted)} bytes")
+
+            # Финальное сообщение
+            total_time = time.time() - start_time
+            speed = file_size / total_time / (1024 * 1024) if total_time > 0 else 0
+
+            print(f"\n {operation} completed successfully!")
+            print(f"   Total time: {total_time:.2f}s")
+            print(f"   Speed: {speed:.2f} MB/s")
+
+            if LOGGING_AVAILABLE:
+                CryptoLogger.log(f" {operation} completed in {total_time:.2f}s")
+
+        except Exception as e:
+            error_msg = f"\n {operation} FAILED: {str(e)}"
+            print(error_msg)
+
+            if LOGGING_AVAILABLE:
+                CryptoLogger.log(error_msg, is_error=True)
+                import traceback
+                CryptoLogger.log(traceback.format_exc(), is_error=True)
+
+            if os.path.exists(output_path):
+                try:
+                    os.remove(output_path)
+                except:
+                    pass
+
+            raise e
+
+    @staticmethod
+    def process_file_streaming(input_path: str, output_path: str, key: bytes,
+                               mode: str, encrypt: bool, iv: bytes = None):
+        """
+        Потоковая обработка для режимов, которые её поддерживают (CFB, OFB, CTR)
+        """
+        FileProcessor._init_logging()
+
+        if not os.path.exists(input_path):
+            raise FileNotFoundError(f"Input file not found: {input_path}")
+
+        # 🆕 Если режим ECB или CBC, используем специальную обработку
+        if mode in ['ecb', 'cbc']:
+            return FileProcessor._process_ecb_cbc_streaming(
+                input_path, output_path, key, mode, encrypt, iv
+            )
+
+        file_size = os.path.getsize(input_path)
+        operation = "ENCRYPTION" if encrypt else "DECRYPTION"
+        total_chunks = (file_size + FileProcessor.CHUNK_SIZE - 1) // FileProcessor.CHUNK_SIZE
+
+        if LOGGING_AVAILABLE:
+            CryptoLogger.log(
+                f" Starting STREAMING {operation} in {mode.upper()} mode\n"
+                f"   Input: {input_path}\n"
+                f"   Output: {output_path}\n"
+                f"   Size: {file_size:,} bytes\n"
+                f"   Chunks: {total_chunks}"
+            )
+
+        print(f"\n Starting {operation.lower()} in {mode.upper()} mode...")
+        print(f"   File size: {file_size / (1024 * 1024):.2f} MB")
+        print(f"   Total chunks: {total_chunks}")
+
+        start_time = time.time()
+
+        try:
+            with open(input_path, 'rb') as infile, open(output_path, 'wb') as outfile:
+                # Инициализация шифра
+                if encrypt:
+                    cipher = CipherCore(key, mode, iv)
+                    # Записываем IV в начало файла (кроме ECB)
+                    if mode != 'ecb':
+                        outfile.write(cipher.get_iv())
+                        if LOGGING_AVAILABLE:
+                            CryptoLogger.log(f"Written IV: {cipher.get_iv().hex()}")
+                else:
+                    if mode == 'ecb':
+                        cipher = CipherCore(key, mode)
+                    else:
+                        # Читаем IV из файла
+                        iv_from_file = infile.read(16)
+                        if len(iv_from_file) != 16:
+                            raise ValueError(f"Invalid IV in file: {len(iv_from_file)} bytes")
+                        cipher = CipherCore(key, mode, iv_from_file)
+                        if LOGGING_AVAILABLE:
+                            CryptoLogger.log(f"Read IV: {iv_from_file.hex()}")
+
+                processed_bytes = 0
+                chunk_num = 0
+
+                print(f"\n📊 Progress:")
+                FileProcessor._print_progress(0, file_size, chunk_num=0, total_chunks=total_chunks)
+
+                while True:
+                    chunk_start_time = time.time()
+                    chunk = infile.read(FileProcessor.CHUNK_SIZE)
+
+                    if not chunk:
+                        break
+
+                    chunk_num += 1
+                    chunk_size = len(chunk)
+                    processed_bytes += chunk_size
+
+                    # Определяем последний ли это чанк
+                    is_last_chunk = (chunk_size < FileProcessor.CHUNK_SIZE) or (processed_bytes >= file_size)
+
+                    # Обработка чанка
+                    if encrypt:
+                        processed_chunk = cipher.encrypt_chunk(chunk, is_final=is_last_chunk)
+                    else:
+                        processed_chunk = cipher.decrypt_chunk(chunk, is_final=is_last_chunk)
+
+                    outfile.write(processed_chunk)
+
+                    # Обновление прогресса
+                    chunk_time = time.time() - chunk_start_time
+                    speed = chunk_size / chunk_time / (1024 * 1024) if chunk_time > 0 else 0
+
+                    FileProcessor._print_progress(
+                        processed_bytes, file_size, speed, chunk_num, total_chunks
+                    )
+
+                    if LOGGING_AVAILABLE:
+                        CryptoLogger.log(
+                            f"Chunk {chunk_num}: {chunk_size / (1024 * 1024):.2f} MB, "
+                            f"speed: {speed:.1f} MB/s"
+                        )
+
+                # Финальное сообщение
+                print()  # Новая строка
+                total_time = time.time() - start_time
+                avg_speed = processed_bytes / total_time / (1024 * 1024) if total_time > 0 else 0
+
+                print(f"\n {operation} completed successfully!")
+                print(f"   Total time: {total_time:.2f}s")
+                print(f"   Average speed: {avg_speed:.2f} MB/s")
+                print(f"   Chunks processed: {chunk_num}")
+
+                if LOGGING_AVAILABLE:
+                    CryptoLogger.log(
+                        f" STREAMING {operation} COMPLETED\n"
+                        f"   Total time: {total_time:.2f}s\n"
+                        f"   Average speed: {avg_speed:.2f} MB/s"
+                    )
+
+        except Exception as e:
+            error_msg = f"\n {operation} FAILED: {str(e)}"
+            print(error_msg)
+
+            if LOGGING_AVAILABLE:
+                CryptoLogger.log(error_msg, is_error=True)
+                import traceback
+                CryptoLogger.log(traceback.format_exc(), is_error=True)
+
+            if os.path.exists(output_path):
+                try:
+                    os.remove(output_path)
+                except:
+                    pass
+
+            raise e
+
+    @staticmethod
+    def process_file_legacy(input_path: str, output_path: str, key: bytes,
+                            mode: str, encrypt: bool, iv: bytes = None):
+        """Оригинальная обработка файла"""
+        FileProcessor._init_logging()
+
+        if LOGGING_AVAILABLE:
+            CryptoLogger.log(f"Using LEGACY processing for {input_path}")
+
+        # Читаем весь файл в память
+        with open(input_path, 'rb') as f:
+            data = f.read()
+
+        cipher = CipherCore(key, mode, iv)
+
+        if encrypt:
+            encrypted = cipher.encrypt(data)
+            with open(output_path, 'wb') as f:
+                f.write(encrypted)
+        else:
+            decrypted = cipher.decrypt(data)
+            with open(output_path, 'wb') as f:
+                f.write(decrypted)
 
     @staticmethod
     def process_file(input_path: str, output_path: str, key: bytes,
                      mode: str, encrypt: bool, iv: bytes = None):
         """
-        Обработка файла с поддержкой разных режимов шифрования
-
-        Args:
-            input_path: путь к входному файлу
-            output_path: путь к выходному файлу
-            key: ключ шифрования
-            mode: режим работы
-            encrypt: True для шифрования, False для дешифрования
-            iv: вектор инициализации (для дешифрования)
+        Универсальная обработка файла
         """
-        # Инициализация логирования
-        FileProcessor._init_logging()
-
-        if not os.path.exists(input_path):
-            error_msg = f"Input file not found: {input_path}"
-            if LOGGING_AVAILABLE:
-                CryptoLogger.log(error_msg, is_error=True)
-            raise FileNotFoundError(error_msg)
-
         file_size = os.path.getsize(input_path)
-        operation = "encryption" if encrypt else "decryption"
 
-        # Логирование начала операции
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log_file_operation(
-                operation=f"{operation} ({mode})",
-                input_file=input_path,
-                output_file=output_path,
-                key_info={
-                    'hex': key.hex() if key else 'N/A',
-                    'algorithm': 'AES',
-                    'mode': mode.upper(),
-                    'key_size': len(key) * 8
-                }
-            )
-
-            CryptoLogger.log(
-                f"Starting file {operation}: "
-                f"input={input_path}, "
-                f"output={output_path}, "
-                f"size={file_size} bytes, "
-                f"mode={mode}"
-            )
-
-        start_time = time.time()
-
-        try:
-            if encrypt:
-                if LOGGING_AVAILABLE:
-                    CryptoLogger.log(f"Encrypting {file_size} bytes")
-                FileProcessor._encrypt_file(input_path, output_path, key, mode)
-            else:
-                if LOGGING_AVAILABLE:
-                    CryptoLogger.log(f"Decrypting {file_size} bytes")
-                    if iv:
-                        CryptoLogger.log(f"Using provided IV: {iv.hex()}")
-                FileProcessor._decrypt_file(input_path, output_path, key, mode, iv)
-
-            elapsed = time.time() - start_time
-
-            # Логирование производительности
+        # 🆕 Для GCM всегда используем legacy режим
+        if mode == 'gcm':
             if LOGGING_AVAILABLE:
-                CryptoLogger.log_performance(
-                    f"File {operation}",
-                    file_size,
-                    start_time
-                )
+                CryptoLogger.log(f"GCM mode detected, using legacy processing")
+            return FileProcessor.process_file_legacy(input_path, output_path, key, mode, encrypt, iv)
 
-                # Детальное логирование завершения
-                CryptoLogger.log(
-                    f"{operation.capitalize()} completed successfully: "
-                    f"{input_path} -> {output_path} "
-                    f"({file_size} bytes in {elapsed:.2f}s)"
-                )
+        # 🆕 Для ECB и CBC всегда используем специальную обработку (не потоковую)
+        if mode in ['ecb', 'cbc']:
+            return FileProcessor._process_ecb_cbc_streaming(input_path, output_path, key, mode, encrypt, iv)
 
-                # Проверка целостности выходного файла
-                if os.path.exists(output_path):
-                    output_size = os.path.getsize(output_path)
-                    CryptoLogger.log(f"Output file created: {output_path} ({output_size} bytes)")
-
-        except Exception as e:
-            error_msg = f"Error during {operation}: {str(e)}"
+        # Для остальных режимов: если файл большой (>100MB), используем потоковую обработку
+        if file_size > 100 * 1024 * 1024:  # 100 MB
             if LOGGING_AVAILABLE:
-                CryptoLogger.log(error_msg, is_error=True)
-
-            # Очистка частично созданного файла
-            if os.path.exists(output_path):
-                try:
-                    os.remove(output_path)
-                    if LOGGING_AVAILABLE:
-                        CryptoLogger.log(f"Removed partial output file: {output_path}")
-                except Exception as cleanup_error:
-                    if LOGGING_AVAILABLE:
-                        CryptoLogger.log(f"Failed to remove partial file: {cleanup_error}", is_error=True)
-
-            raise e
-
-    @staticmethod
-    def _encrypt_file(input_path: str, output_path: str, key: bytes, mode: str):
-        """Шифрование файла"""
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(f"Reading file for encryption: {input_path}")
-
-        with open(input_path, 'rb') as infile:
-            plaintext = infile.read()
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(f"File read: {len(plaintext)} bytes")
-
-            # Вычисление хеша исходного файла
-            input_hash = hashlib.sha256(plaintext).hexdigest()[:16]
-            CryptoLogger.log(f"Input file SHA-256 (first 16 chars): {input_hash}")
-
-        # Создание шифра
-        cipher_start = time.time()
-        cipher = CipherCore(key, mode)
-        cipher_creation_time = time.time() - cipher_start
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(f"Cipher created in {cipher_creation_time:.3f}s")
-
-        # Шифрование
-        encrypt_start = time.time()
-        encrypted = cipher.encrypt(plaintext)
-        encrypt_time = time.time() - encrypt_start
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(
-                f"Encryption time: {encrypt_time:.3f}s, "
-                f"throughput: {len(plaintext) / encrypt_time / 1024 / 1024:.2f} MB/s"
-            )
-            CryptoLogger.log(
-                f"Size change: {len(plaintext)} -> {len(encrypted)} bytes "
-                f"(+{len(encrypted) - len(plaintext)} bytes)"
-            )
-
-        with open(output_path, 'wb') as outfile:
-            outfile.write(encrypted)
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(
-                f"Encryption completed: {len(plaintext)} -> {len(encrypted)} bytes "
-                f"(mode: {mode}, iv: {cipher.iv.hex() if cipher.iv else 'N/A'})"
-            )
-
-            # Проверка записи
-            if os.path.exists(output_path):
-                written_size = os.path.getsize(output_path)
-                if written_size == len(encrypted):
-                    CryptoLogger.log(f"File written successfully: {written_size} bytes")
-                else:
-                    CryptoLogger.log(
-                        f"File size mismatch: expected {len(encrypted)}, got {written_size}",
-                        is_error=True
-                    )
-
-    @staticmethod
-    def _decrypt_file(input_path: str, output_path: str, key: bytes,
-                      mode: str, iv: bytes = None):
-        """Дешифрование файла"""
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(f"Reading file for decryption: {input_path}")
-
-        with open(input_path, 'rb') as infile:
-            if mode != 'ecb':
-                # Читаем IV из файла если не предоставлен
-                if iv is None:
-                    file_iv = infile.read(16)
-                    if len(file_iv) != 16:
-                        error_msg = f"Invalid IV in file: expected 16 bytes, got {len(file_iv)}"
-                        if LOGGING_AVAILABLE:
-                            CryptoLogger.log(error_msg, is_error=True)
-                        raise ValueError(error_msg)
-                    if LOGGING_AVAILABLE:
-                        CryptoLogger.log(f"Read IV from file: {file_iv.hex()}")
-                else:
-                    file_iv = iv
-                    if LOGGING_AVAILABLE:
-                        CryptoLogger.log(f"Using provided IV: {file_iv.hex()}")
-                ciphertext = infile.read()
-            else:
-                file_iv = None
-                ciphertext = infile.read()
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(f"File read: {len(ciphertext)} bytes (mode: {mode})")
-
-        # Создание шифра
-        cipher_start = time.time()
-        cipher = CipherCore(key, mode)
-        cipher_creation_time = time.time() - cipher_start
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(f"Cipher created in {cipher_creation_time:.3f}s")
-
-        # Дешифрование
-        decrypt_start = time.time()
-        decrypted = cipher.decrypt(ciphertext)
-        decrypt_time = time.time() - decrypt_start
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(
-                f"Decryption time: {decrypt_time:.3f}s, "
-                f"throughput: {len(ciphertext) / decrypt_time / 1024 / 1024:.2f} MB/s"
-            )
-            CryptoLogger.log(
-                f"Size change: {len(ciphertext)} -> {len(decrypted)} bytes "
-                f"(-{len(ciphertext) - len(decrypted)} bytes)"
-            )
-
-        with open(output_path, 'wb') as outfile:
-            outfile.write(decrypted)
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(
-                f"Decryption completed: {len(ciphertext)} -> {len(decrypted)} bytes "
-                f"(mode: {mode}, iv: {file_iv.hex() if file_iv else 'N/A'})"
-            )
-
-            # Вычисление хеша дешифрованного файла
-            output_hash = hashlib.sha256(decrypted).hexdigest()[:16]
-            CryptoLogger.log(f"Output file SHA-256 (first 16 chars): {output_hash}")
-
-            # Проверка записи
-            if os.path.exists(output_path):
-                written_size = os.path.getsize(output_path)
-                if written_size == len(decrypted):
-                    CryptoLogger.log(f"File written successfully: {written_size} bytes")
-                else:
-                    CryptoLogger.log(
-                        f"File size mismatch: expected {len(decrypted)}, got {written_size}",
-                        is_error=True
-                    )
-
-    @staticmethod
-    def verify_file_integrity(original_path: str, restored_path: str) -> bool:
-        """
-        Проверка целостности файла после шифрования/дешифрования
-
-        Args:
-            original_path: путь к оригинальному файлу
-            restored_path: путь к восстановленному файлу
-
-        Returns:
-            bool: True если файлы идентичны
-        """
-        FileProcessor._init_logging()
-
-        if not os.path.exists(original_path):
-            error_msg = f"Original file not found: {original_path}"
+                CryptoLogger.log(f"File size {file_size / (1024 * 1024):.1f} MB > 100 MB, using STREAMING mode")
+            return FileProcessor.process_file_streaming(input_path, output_path, key, mode, encrypt, iv)
+        else:
             if LOGGING_AVAILABLE:
-                CryptoLogger.log(error_msg, is_error=True)
-            raise FileNotFoundError(error_msg)
-
-        if not os.path.exists(restored_path):
-            error_msg = f"Restored file not found: {restored_path}"
-            if LOGGING_AVAILABLE:
-                CryptoLogger.log(error_msg, is_error=True)
-            raise FileNotFoundError(error_msg)
-
-        # Сравнение размеров
-        original_size = os.path.getsize(original_path)
-        restored_size = os.path.getsize(restored_path)
-
-        if LOGGING_AVAILABLE:
-            CryptoLogger.log(
-                f"Verifying integrity: "
-                f"original={original_path} ({original_size} bytes), "
-                f"restored={restored_path} ({restored_size} bytes)"
-            )
-
-        if original_size != restored_size:
-            if LOGGING_AVAILABLE:
-                CryptoLogger.log(
-                    f"Size mismatch: original={original_size}, restored={restored_size}",
-                    is_error=True
-                )
-            return False
-
-        # Сравнение содержимого по блокам
-        block_size = 65536  # 64KB
-        identical = True
-        differences = 0
-
-        with open(original_path, 'rb') as f1, open(restored_path, 'rb') as f2:
-            block_num = 0
-            while True:
-                block1 = f1.read(block_size)
-                block2 = f2.read(block_size)
-
-                if not block1 and not block2:
-                    break
-
-                if block1 != block2:
-                    identical = False
-                    differences += 1
-
-                    if LOGGING_AVAILABLE and differences <= 3:  # Логируем только первые 3 различия
-                        CryptoLogger.log(
-                            f"Difference at block {block_num} (offset: {block_num * block_size})",
-                            is_error=True
-                        )
-
-                block_num += 1
-
-        if LOGGING_AVAILABLE:
-            if identical:
-                CryptoLogger.log(f"Files are identical: {original_path} == {restored_path}")
-            else:
-                CryptoLogger.log(
-                    f"Files differ: {differences} block(s) different",
-                    is_error=True
-                )
-
-        return identical
+                CryptoLogger.log(f"File size {file_size / (1024 * 1024):.1f} MB <= 100 MB, using LEGACY mode")
+            return FileProcessor.process_file_legacy(input_path, output_path, key, mode, encrypt, iv)
 
 
-# Удобные функции для работы с файлами
 def encrypt_file(input_path: str, output_path: str, key: bytes, mode: str = 'ecb') -> bool:
-    """
-    Удобная функция для шифрования файла
-
-    Returns:
-        bool: True если операция успешна
-    """
     try:
         FileProcessor.process_file(input_path, output_path, key, mode, encrypt=True)
         return True
@@ -360,12 +326,6 @@ def encrypt_file(input_path: str, output_path: str, key: bytes, mode: str = 'ecb
 
 
 def decrypt_file(input_path: str, output_path: str, key: bytes, mode: str = 'ecb') -> bool:
-    """
-    Удобная функция для дешифрования файла
-
-    Returns:
-        bool: True если операция успешна
-    """
     try:
         FileProcessor.process_file(input_path, output_path, key, mode, encrypt=False)
         return True

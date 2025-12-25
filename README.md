@@ -293,6 +293,29 @@ python tests/test_sha256.py
 python tests/test_all_cipher_modes.py
 ````
 
+### Тестирование поточной обработки файла
+
+### Генерация файла
+```bash
+
+fallocate -l 1G example.txt
+````
+### пример работы для CTR
+```bash
+python cryptocore.py --algorithm ctr --mode ecb --encrypt --key 00112233445566778899aabbccddeeff --input example.txt --output document_encrypted.pdf.cfb.enc
+
+python cryptocore.py --algorithm ctr --mode ecb --decrypt --key 00112233445566778899aabbccddeeff --input document_encrypted.pdf.cfb.enc --output document_decrupt.txt
+
+diff  example.txt document_decrupt.txt
+
+```
+### Удалить тестовый файл
+```bash 
+
+rm example.txt 
+```
+
+
 
 
 ## Тестирование с NIST Statistical Test Suite

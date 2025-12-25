@@ -645,89 +645,59 @@ class CryptoCoreCLI:
     def encrypt_file(input_path: str, output_path: str, key: bytes, mode: str,
                      aad: bytes = b"", nonce: bytes = None):
         """
-        Шифрование файла с поддержкой GCM
-
-        Args:
-            input_path: Path to input file
-            output_path: Path to output file
-            key: Encryption key
-            mode: Encryption mode
-            aad: Additional Authenticated Data (for GCM)
-            nonce: Nonce/IV (optional, generated if None)
+        Шифрование файла
         """
-        # 🆕 Специальная обработка для GCM
         if mode == 'gcm':
             CryptoCoreCLI.encrypt_file_gcm(input_path, output_path, key, aad, nonce)
             return
 
-        # Стандартное шифрование для других режимов
-        from crypto.cipher_core import CipherCore
+        # 🆕 Всегда используем потоковую обработку для больших файлов
+        from crypto.file_processor import FileProcessor
 
-        # Создаем cipher core с предоставленным ключом и режимом
-        cipher = CipherCore(key, mode)
+        print(f"🔧 Starting file encryption...")
+        print(f"   Mode: {mode.upper()}")
+        print(f"   Key: {key.hex()}")
 
-        # Читаем входной файл
-        with open(input_path, 'rb') as f:
-            plaintext = f.read()
+        # Используем универсальный метод с автоматическим выбором
+        FileProcessor.process_file(
+            input_path=input_path,
+            output_path=output_path,
+            key=key,
+            mode=mode,
+            encrypt=True,
+            iv=None  # IV будет сгенерирован автоматически
+        )
 
-        # Шифруем данные
-        encrypted = cipher.encrypt(plaintext)
-
-        # Записываем результат
-        with open(output_path, 'wb') as f:
-            f.write(encrypted)
-
-        print(f"Encryption successful: {input_path} -> {output_path}")
-        print(f"Mode: {mode.upper()}")
-        print(f"Key: {key.hex()}")
-        if aad:
-            print(f"AAD (ignored for {mode}): {aad.hex()}")
-        print(f"Original size: {len(plaintext)} bytes")
-        print(f"Encrypted size: {len(encrypted)} bytes")
+        print(f"✅ Encryption completed: {input_path} -> {output_path}")
 
     @staticmethod
     def decrypt_file(input_path: str, output_path: str, key: bytes, mode: str,
                      aad: bytes = b"", nonce: bytes = None):
         """
-        Дешифрование файла с поддержкой GCM
-
-        Args:
-            input_path: Path to input file
-            output_path: Path to output file
-            key: Encryption key
-            mode: Encryption mode
-            aad: Additional Authenticated Data (for GCM)
-            nonce: Nonce/IV (optional, read from file if None)
+        Дешифрование файла
         """
-        # 🆕 Специальная обработка для GCM
         if mode == 'gcm':
             CryptoCoreCLI.decrypt_file_gcm(input_path, output_path, key, aad, nonce)
             return
 
-        # Стандартное дешифрование для других режимов
-        from crypto.cipher_core import CipherCore
+        # 🆕 Всегда используем потоковую обработку для больших файлов
+        from crypto.file_processor import FileProcessor
 
-        # Создаем cipher core с предоставленным ключом и режимом
-        cipher = CipherCore(key, mode)
+        print(f"🔧 Starting file decryption...")
+        print(f"   Mode: {mode.upper()}")
+        print(f"   Key: {key.hex()}")
 
-        # Читаем зашифрованный файл
-        with open(input_path, 'rb') as f:
-            ciphertext = f.read()
+        # Используем универсальный метод
+        FileProcessor.process_file(
+            input_path=input_path,
+            output_path=output_path,
+            key=key,
+            mode=mode,
+            encrypt=False,
+            iv=None  # IV будет прочитан из файла
+        )
 
-        # Дешифруем данные
-        decrypted = cipher.decrypt(ciphertext)
-
-        # Записываем результат
-        with open(output_path, 'wb') as f:
-            f.write(decrypted)
-
-        print(f"Decryption successful: {input_path} -> {output_path}")
-        print(f"Mode: {mode.upper()}")
-        print(f"Key: {key.hex()}")
-        if aad:
-            print(f"AAD (ignored for {mode}): {aad.hex()}")
-        print(f"Encrypted size: {len(ciphertext)} bytes")
-        print(f"Decrypted size: {len(decrypted)} bytes")
+        print(f"✅ Decryption completed: {input_path} -> {output_path}")
 
     @staticmethod
     def encrypt_file_gcm(input_path: str, output_path: str, key: bytes,

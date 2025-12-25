@@ -1,6 +1,7 @@
 import logging
 import datetime
 import os
+import sys
 import time  # <-- Добавляем импорт time
 
 
@@ -85,6 +86,47 @@ class CryptoLogger:
             log_msg += f"  {key}: {value}\n"
 
         CryptoLogger.log(log_msg)
+
+    @staticmethod
+    def log_progress(operation: str, current: int, total: int, speed: float = None):
+        """Логирование прогресса обработки"""
+        if not CryptoLogger._is_initialized:
+            CryptoLogger.setup_logging()
+
+        percentage = (current / total) * 100 if total > 0 else 0
+        current_mb = current / (1024 * 1024)
+        total_mb = total / (1024 * 1024)
+
+        message = (f"[PROGRESS] {operation}: "
+                   f"{current_mb:.1f}/{total_mb:.1f} MB "
+                   f"({percentage:.1f}%)")
+
+        if speed:
+            message += f" | Speed: {speed:.2f} MB/s"
+
+        # Вывод в терминал с очисткой строки
+        sys.stdout.write(f"\r{message}")
+        sys.stdout.flush()
+
+        # Также записываем в лог-файл (но без перезаписи строки)
+        if percentage % 10 == 0 or current == total:  # Каждые 10% или завершение
+            logging.info(message.strip())
+
+    @staticmethod
+    def log_chunk(operation: str, chunk_num: int, chunk_size: int,
+                  time_taken: float, total_processed: int, total_size: int):
+        """Логирование обработки чанка"""
+        if not CryptoLogger._is_initialized:
+            CryptoLogger.setup_logging()
+
+        speed = chunk_size / time_taken / (1024 * 1024) if time_taken > 0 else 0
+        percentage = (total_processed / total_size) * 100 if total_size > 0 else 0
+
+        message = (f"[CHUNK {chunk_num}] {operation}: "
+                   f"{chunk_size / (1024 * 1024):.2f} MB in {time_taken:.3f}s "
+                   f"({speed:.2f} MB/s) | Total: {percentage:.1f}%")
+
+        logging.info(message)
 
     @staticmethod
     def log_file_operation(operation: str, input_file: str, output_file: str = None,
